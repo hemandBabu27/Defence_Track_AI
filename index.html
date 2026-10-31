@@ -5,6 +5,9 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Defence Track AI | Career Portal & AI Advisor</title>
   <meta name="description" content="AI-integrated career tracker and advisor for Indian Armed Forces (Army, Navy, Air Force), DRDO internships, and entrance examinations.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@700;800&family=Outfit:wght@400;500;600;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
@@ -49,6 +52,10 @@
           <button class="btn btn-secondary" onclick="switchTab('eligibility')">Check Eligibility 📊</button>
         </div>
       </div>
+
+      <!-- Live sync status + next date -->
+      <div id="sync-bar" class="sync-bar" role="status" aria-live="polite"></div>
+      <div id="next-deadline" class="next-deadline" style="display:none;"></div>
 
       <!-- Quick Metrics -->
       <div class="stats-grid">
@@ -99,6 +106,7 @@
             <option value="indian air force">Indian Air Force</option>
             <option value="drdo">DRDO</option>
           </select>
+          <button type="button" id="watch-filter" class="btn btn-secondary watch-filter" aria-pressed="false">★ Watchlist</button>
         </div>
       </div>
 
@@ -106,6 +114,24 @@
       <div class="notifications-grid" id="notifications-container">
         <!-- Rendered dynamically by app.js -->
       </div>
+
+      <!-- Upcoming key dates -->
+      <div class="dashboard-header" style="margin-top: 8px;">
+        <div>
+          <h2 style="font-size: 1.5rem; margin-bottom: 4px;">Key Dates Ahead</h2>
+          <p style="font-size: 0.9rem;">Openings, deadlines and exams in date order. Counts update automatically each day.</p>
+        </div>
+      </div>
+      <ul class="key-dates glass-card" id="key-dates"></ul>
+
+      <!-- Live official-source feed -->
+      <div class="dashboard-header" style="margin-top: 40px;">
+        <div>
+          <h2 style="font-size: 1.5rem; margin-bottom: 4px;">Live from Official Sites</h2>
+          <p style="font-size: 0.9rem;">Headlines read automatically from UPSC, Army, IAF, Navy, Agnipath Vayu and DRDO pages. Always open the link and confirm on the official site.</p>
+        </div>
+      </div>
+      <div class="feed-grid" id="live-feed"></div>
     </section>
 
 
@@ -332,8 +358,9 @@
   <footer>
     <div class="container">
       <p class="footer-text">🇮🇳 Defence Track AI - Indian Defence Career Portal & Advisor. Built with Pride.</p>
+      <p class="footer-sources">Official sources: <span id="sources-list"></span></p>
       <p class="footer-disclaimer">
-        Disclaimer: This portal is a mock informational resource built to display AI integration capabilities. 
+        Disclaimer: This portal is a student-built informational resource. Dates marked "expected" are estimates from earlier cycles, and UPSC calendar dates can change. 
         It is NOT associated with the Indian Ministry of Defence, UPSC, or any government body. Candidates must verify exam criteria on official recruitments websites before applying.
       </p>
     </div>
@@ -341,6 +368,7 @@
 
   <!-- Include Script Files -->
   <script src="data.js"></script>
+  <script src="eligibility.js"></script>
   <script src="ai-assistant.js"></script>
   <script src="app.js"></script>
 </body>

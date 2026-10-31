@@ -7,6 +7,8 @@
 class DefenceAIAssistant {
   constructor(defenceData) {
     this.data = defenceData;
+    this.liveFeed = [];   // headlines from official sites (filled by app.js)
+    this.liveMeta = null; // { generatedAt }
     // States for interactive Profile Analysis
     this.analysisState = {
       isActive: false,
@@ -30,6 +32,27 @@ class DefenceAIAssistant {
       step: 0,
       inputs: { gender: "", age: 0, qualification: "", hasPCM: null, height: 0 }
     };
+  }
+
+  fmtDate(iso) {
+    return new Date(iso + "T00:00:00").toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" });
+  }
+
+  today() {
+    return new Date().toLocaleDateString("en-IN", { day: "numeric", month: "long", year: "numeric" });
+  }
+
+  describeNotification(n) {
+    const badge = { Active: "🟢 OPEN", Upcoming: "🟡 UPCOMING", Expected: "⚪ EXPECTED", Closed: "⚫ CLOSED" }[n.status] || n.status;
+    let r = `**${n.title}** [${badge}]\n`;
+    r += `*   **Post**: ${n.postName} (${n.organization})\n`;
+    if (n.applyStart) r += `*   **Apply**: ${this.fmtDate(n.applyStart)} to ${this.fmtDate(n.applyLastDate)}\n`;
+    else if (n.expectedWindow) r += `*   **Apply**: ${n.expectedWindow}\n`;
+    r += `*   **Exam / selection**: ${n.examDate ? this.fmtDate(n.examDate) : (n.examNote || "To be announced")}\n`;
+    r += `*   **Eligibility**: ${n.eligibilityBrief}\n`;
+    r += `*   **Basis**: ${n.basis}\n`;
+    r += `*   [Official site](${n.applyLink})\n\n`;
+    return r;
   }
 
   /**
@@ -66,40 +89,35 @@ class DefenceAIAssistant {
       };
     }
 
+    // 1b. LIVE OFFICIAL-SITE HEADLINES
+    if (/\b(latest|news|headlines?|what'?s new|updates?)\b/.test(msg)) {
+      if (!this.liveFeed.length) {
+        return {
+          text: `I don't have a live feed right now. It fills in when the server (or the scheduled update) has checked the official sites.\n\nMeanwhile, the curated notifications are current as of **${this.today()}**. Ask me about **vacancies** or **deadlines**.`
+        };
+      }
+      let response = `### 📰 Latest from official sites\n\n`;
+      this.liveFeed.slice(0, 12).forEach((h) => { response += `*   **${h.source}**: [${h.title}](${h.url})\n`; });
+      response += `\n*Headlines are read automatically from the official pages. Open the link and confirm details before acting.*`;
+      return { text: response };
+    }
+
     // 2. SSB INTERVIEW QUERIES
-    if (msg.includes("ssb") || msg.includes("interview") || msg.includes("selection board") || msg.includes("5 day")) {
+    if (/\b(ssb|interview|selection board|5[- ]?day)\b/.test(msg)) {
       return {
         text: `### 🎯 SSB Interview (Services Selection Board) Overview\n\nThe SSB is a comprehensive **5-day testing procedure** designed to evaluate 15 Officer Like Qualities (OLQs):\n\n*   **Day 1: Screening Test**\n    *   OIR (Officers Intelligence Rating) Test: Verbal & Non-verbal reasoning.\n    *   PP&DT (Picture Perception & Description Test): Story writing, individual narration, and group discussion. *Crucial stage (many candidates get screened out here).* \n*   **Day 2: Psychological Testing**\n    *   TAT (Thematic Apperception Test): Write 12 stories based on pictures.\n    *   WAT (Word Association Test): Write sentences on 60 words (15s each).\n    *   SRT (Situation Reaction Test): Write reactions to 60 real-life scenarios (30 mins).\n    *   SD (Self Description): Write opinions of parents, teachers, friends, and self.\n*   **Day 3 & 4: Group Testing Officers (GTO) Tasks**\n    *   GD (Group Discussions), GPE (Group Planning Exercise).\n    *   PGT (Progressive Group Task), HGT (Half Group Task), IOT (Individual Obstacles).\n    *   Snake Race/Group Obstacle Race, Command Task, and Lecturette.\n*   **Day 5: Board Conference**\n    *   A face-to-face final assessment by all assessors. Results are declared immediately after.\n\n**💡 Pro Tip:** Focus on honesty, team spirit, clear expression, and physical stamina. Do you want tips on a specific test (like PP&DT or SRT)?`
       };
     }
 
     // 3. EYE VISION & LASIK
-    if (
-      msg.includes("eye") ||
-      msg.includes("vision") ||
-      msg.includes("glass") ||
-      msg.includes("spectacle") ||
-      msg.includes("lasik") ||
-      msg.includes("myopia") ||
-      msg.includes("hypermetropia") ||
-      msg.includes("blind")
-    ) {
+    if (/\b(eyes?|eyesight|vision|glass(es)?|spectacles?|specs|lasik|prk|myopia|hypermetropia|colou?r[- ]?blind\w*|blind)\b/.test(msg)) {
       return {
         text: `### 👁️ Visual Standards for Indian Defence Services\n\nDefence visual standards are strict and vary by service and branch:\n\n*   **Flying Branch (Air Force/Navy/Army Aviation):**\n    *   **6/6** in one eye, **6/9** in other (correctable to 6/6 only under hypermetropia +1.5D).\n    *   *Myopia is NOT allowed* for cadet entries.\n    *   **LASIK/PRK** is permitted ONLY if performed after age 20, done at least 12 months prior to physicals, with normal corneal thickness and retinal map.\n*   **Army (GD / Technical Officer):**\n    *   Uncorrected: **6/6** better eye, **6/9** worse eye.\n    *   Correctable to 6/6 with glasses. Max limits: Myopia up to **-3.50D**, Hypermetropia up to **+3.50D** (including astigmatism).\n*   **Navy (Executive):**\n    *   Uncorrected: **6/6** better, **6/12** worse. Correctable to 6/6. Max Myopia: **-0.75D**, Max Hypermetropia: **+1.5D**.\n\n*Note: Color blindness (CP-III or worse depending on branch) is a major rejection point for combat roles.*`
       };
     }
 
     // 4. MEDICAL REJECTIONS (Flat foot, knock knees, tattoos)
-    if (
-      msg.includes("medical") ||
-      msg.includes("disqualification") ||
-      msg.includes("rejection") ||
-      msg.includes("flat foot") ||
-      msg.includes("knock knee") ||
-      msg.includes("tattoo") ||
-      msg.includes("dns") ||
-      msg.includes("sweaty")
-    ) {
+    if (/\b(medicals?|disqualifications?|rejections?|flat ?foot|knock[- ]knees?|tattoos?|dns|sweaty)\b/.test(msg)) {
       let response = `### 🏥 Common Medical Rejection Grounds in Defence Physicals\n\nBased on official Armed Forces Medical Boards, here are critical checkpoints:\n\n`;
       this.data.physicalStandards.commonDisqualifications.forEach((disq) => {
         response += `*   **${disq.name}**: ${disq.details}\n`;
@@ -109,16 +127,7 @@ class DefenceAIAssistant {
     }
 
     // 5. DRDO / INTERNSHIP QUERIES
-    if (
-      msg.includes("internship") ||
-      msg.includes("intern") ||
-      msg.includes("drdo") ||
-      msg.includes("apprentice") ||
-      msg.includes("project") ||
-      msg.includes("ada") ||
-      msg.includes("bel") ||
-      msg.includes("hal")
-    ) {
+    if (/\b(internships?|intern|drdo|apprentice\w*|projects?|ada|bel|hal|gtre)\b/.test(msg)) {
       let response = `### 🔬 Research Internships & Training in Defence Sector\n\nStudents (B.E/B.Tech, M.Tech, M.Sc) can gain valuable exposure at **DRDO (Defence Research & Development Organisation)**, **ADA**, and Defence PSUs:\n\n`;
       this.data.internships.forEach((intern) => {
         response += `🌐 **${intern.title}** (${intern.organization})\n`;
@@ -131,34 +140,52 @@ class DefenceAIAssistant {
       return { text: response };
     }
 
-    // 6. EXAM INFO REQUEST
+    // 6. EXAM INFO REQUEST (with live status for that exam)
+    const EXAM_ALIASES = {
+      nda: /\bnda\b|national defence academy/,
+      cds: /\bcds\b|combined defence/,
+      afcat: /\bafcat\b/,
+      capf: /\bcapf\b|assistant commandant/,
+      ssc_tech: /ssc[- ]?tech|\bssc\b/,
+      tgc: /\btgc\b|technical graduate/,
+      jag: /\bjag\b|judge advocate/,
+      ncc_special: /\bncc\b/,
+      agniveer_army: /agniveer.*army|army.*agniveer|\bagniveer\b/,
+      agniveer_navy: /agniveer.*navy|navy.*agniveer/,
+      agniveer_airforce: /agniveer.*(air ?force|vayu)|vayu/
+    };
     let matchedExam = null;
     for (const exam of this.data.careers) {
-      const aliases = [exam.id, exam.title.toLowerCase()];
-      if (aliases.some((alias) => msg.includes(alias))) {
-        matchedExam = exam;
-        break;
-      }
+      const rx = EXAM_ALIASES[exam.id];
+      if (rx && rx.test(msg)) { matchedExam = exam; break; }
     }
     if (matchedExam) {
+      const related = this.data.notifications.filter((n) => n.careerId === matchedExam.id);
+      let statusBlock = "";
+      if (related.length) {
+        statusBlock = `**📅 Status as of ${this.today()}:**\n` + related.map((n) => {
+          const when = n.applyStart ? `${this.fmtDate(n.applyStart)} to ${this.fmtDate(n.applyLastDate)}` : (n.expectedWindow || "dates to be announced");
+          return `*   ${n.title}: **${n.status}** (${when})`;
+        }).join("\n") + "\n\n";
+      }
       return {
-        text: `### 📋 Entry Details: ${matchedExam.title}\n\n*   **Conducting Body**: ${matchedExam.conductingBody}\n*   **Frequency**: ${matchedExam.frequency}\n*   **Commission**: ${matchedExam.commissionType}\n*   **Who Can Apply**: ${matchedExam.eligibility.gender.join("/")}, aged ${matchedExam.eligibility.ageMin}-${matchedExam.eligibility.ageMax} years.\n*   **Educational Criteria**: ${matchedExam.eligibility.education}\n\n**🛠️ Selection Process:**\n${matchedExam.selectionProcess.map((step) => `1. ${step}`).join("\n")}\n\n**📖 Syllabus Highlights:**\n${matchedExam.syllabi.map((s) => `* ${s}`).join("\n")}\n\n[Official Link](${matchedExam.link})`
+        text: `### 📋 Entry Details: ${matchedExam.title}\n\n${statusBlock}*   **Conducting Body**: ${matchedExam.conductingBody}\n*   **Frequency**: ${matchedExam.frequency}\n*   **Commission**: ${matchedExam.commissionType}\n*   **Who Can Apply**: ${matchedExam.eligibility.gender.join("/")}, aged ${matchedExam.eligibility.ageMin}-${matchedExam.eligibility.ageMax} years.\n*   **Educational Criteria**: ${matchedExam.eligibility.education}\n\n**🛠️ Selection Process:**\n${matchedExam.selectionProcess.map((step, i) => `${i + 1}. ${step}`).join("\n")}\n\n**📖 Syllabus Highlights:**\n${matchedExam.syllabi.map((x) => `* ${x}`).join("\n")}\n\n[Official Link](${matchedExam.link})`
       };
     }
 
-    // 7. ACTIVE NOTIFICATIONS
-    if (msg.includes("vacancy") || msg.includes("notification") || msg.includes("apply") || msg.includes("job") || msg.includes("active opportunity")) {
-      let response = `### 🔔 Live / Upcoming Defence Recruitment Notifications (2026)\n\nHere are the latest openings in the Defence Sector:\n\n`;
-      const active = this.data.notifications.filter((n) => n.status === "Active" || n.status === "Upcoming");
-      active.forEach((n) => {
-        const badge = n.status === "Active" ? "🟢 ACTIVE" : "🟡 UPCOMING";
-        response += `**${n.title}** [${badge}]\n`;
-        response += `*   **Post**: ${n.postName} (${n.organization})\n`;
-        response += `*   **Apply By**: ${n.applyLastDate} | **Exam/Selection**: ${n.examDate}\n`;
-        response += `*   **Eligibility**: ${n.eligibilityBrief}\n`;
-        response += `*   [Apply Online](${n.applyLink})\n\n`;
-      });
-      response += `Would you like me to check your profile eligibility? Type **"Analyze Profile"**!`;
+    // 7. NOTIFICATIONS / DEADLINES (status computed from today's date)
+    if (/\b(vacanc\w*|notifications?|deadlines?|last date|calendar|upcoming|openings?|open now|schedule|dates?|apply|job|jobs)\b/.test(msg)) {
+      const open = this.data.notifications.filter((n) => n.status !== "Closed");
+      const closedRecent = this.data.notifications.filter((n) => n.status === "Closed").slice(0, 2);
+      let response = `### 🔔 Defence recruitment — as of ${this.today()}\n\n`;
+      if (!open.length) response += `Nothing is open or scheduled in my data right now. Check the official sites below.\n\n`;
+      open.forEach((n) => { response += this.describeNotification(n); });
+      if (closedRecent.length) {
+        response += `**Recently closed:**\n`;
+        closedRecent.forEach((n) => { response += `*   ${n.title} (closed ${this.fmtDate(n.applyLastDate)})\n`; });
+        response += `\n`;
+      }
+      response += `Dates marked *EXPECTED* are not official yet. Type **"Analyze Profile"** to see which of these you qualify for.`;
       return { text: response };
     }
 
@@ -176,10 +203,10 @@ class DefenceAIAssistant {
 
     switch (step) {
       case 1: // Gender
-        if (msg.includes("male") || msg === "m") {
-          this.analysisState.inputs.gender = "male";
-        } else if (msg.includes("female") || msg === "f") {
+        if (/\bfemale\b|^f$|\b(woman|girl|lady)\b/.test(msg)) {
           this.analysisState.inputs.gender = "female";
+        } else if (/\bmale\b|^m$|\b(man|boy)\b/.test(msg)) {
+          this.analysisState.inputs.gender = "male";
         } else {
           return {
             text: `⚠️ Please specify either **Male** or **Female** to continue.`
@@ -260,131 +287,51 @@ class DefenceAIAssistant {
   }
 
   /**
-   * Generates eligibility details based on inputs
+   * Generates eligibility details based on inputs (shared rules in eligibility.js)
    */
   generateEligibilityReport() {
+    const Elig = (typeof module !== "undefined" && module.exports) ? require("./eligibility.js") : window.DefenceEligibility;
     const { gender, age, qualification, hasPCM, height } = this.analysisState.inputs;
-    let eligibleCareers = [];
-    let ineligibleCareers = [];
+    const { eligible, restricted } = Elig.evaluate(this.data.careers, this.analysisState.inputs);
+    const qualLabel = {
+      "12th": "Class 12", graduate_non_tech: "Graduate (non-technical)", graduate_tech: "Engineering graduate",
+      law: "Law graduate", post_graduate: "Post graduate"
+    }[qualification] || qualification;
 
-    // Filter careers from DB
-    this.data.careers.forEach((career) => {
-      let isEligible = true;
-      let reasons = [];
-
-      // 1. Gender check
-      if (!career.eligibility.gender.includes(gender)) {
-        isEligible = false;
-        reasons.push(`Restricted to ${career.eligibility.gender.join("/")}`);
-      }
-
-      // 2. Age check
-      if (age < career.eligibility.ageMin) {
-        isEligible = false;
-        reasons.push(`Underage (Min: ${career.eligibility.ageMin} yrs, current: ${age})`);
-      } else if (age > career.eligibility.ageMax) {
-        isEligible = false;
-        reasons.push(`Overage (Max: ${career.eligibility.ageMax} yrs, current: ${age})`);
-      }
-
-      // 3. Education Check
-      const isGrad = ["graduate_non_tech", "graduate_tech", "law", "post_graduate"].includes(qualification);
-      if (career.id === "nda") {
-        if (qualification !== "12th" && !isGrad) {
-          isEligible = false;
-          reasons.push("Requires 12th Standard");
-        }
-        if ((career.title.includes("Navy") || career.title.includes("Air Force")) && !hasPCM) {
-          isEligible = false;
-          reasons.push("Navy & Air Force entry in NDA requires 10+2 PCM");
-        }
-      } else if (career.id === "cds") {
-        if (!isGrad) {
-          isEligible = false;
-          reasons.push("Requires graduation degree");
-        }
-        if (career.title.includes("Air Force Academy") && !hasPCM) {
-          isEligible = false;
-          reasons.push("AFA requires Physics & Maths in 12th");
-        }
-      } else if (career.id === "afcat") {
-        if (!isGrad) {
-          isEligible = false;
-          reasons.push("Requires graduation (B.E/B.Tech or generic with PCM at 12th)");
-        }
-        if (!hasPCM) {
-          isEligible = false;
-          reasons.push("Requires Physics & Mathematics at 10+2 level");
-        }
-      } else if (career.id === "ssc_tech" || career.id === "tgc") {
-        if (qualification !== "graduate_tech") {
-          isEligible = false;
-          reasons.push("Requires B.E / B.Tech engineering degree");
-        }
-      } else if (career.id === "jag") {
-        if (qualification !== "law") {
-          isEligible = false;
-          reasons.push("Requires LLB degree");
-        }
-      } else if (career.id.startsWith("agniveer")) {
-        if (qualification !== "12th" && qualification !== "graduate_non_tech" && qualification !== "graduate_tech" && qualification !== "law" && qualification !== "post_graduate") {
-          isEligible = false;
-          reasons.push("Requires 10th or 12th qualification");
-        }
-      }
-
-      // 4. Physical height check (optional)
-      if (height > 0) {
-        let minHeight = 157.5; // default male army
-        if (gender === "female") minHeight = 152;
-        if (career.id === "afcat" && career.title.toLowerCase().includes("flying")) {
-          minHeight = 162.5;
-        }
-        if (height < minHeight) {
-          isEligible = false;
-          reasons.push(`Height deficiency (Min required: ${minHeight} cm, current: ${height} cm)`);
-        }
-      }
-
-      if (isEligible) {
-        eligibleCareers.push(career);
-      } else {
-        ineligibleCareers.push({ career, reasons });
-      }
-    });
-
-    // Format final markdown string
     let report = `### 📊 Your Profile Analysis Report\n\n`;
     report += `**Profile Summary:**\n`;
     report += `*   Gender: \`${gender.toUpperCase()}\`\n`;
     report += `*   Age: \`${age} Years\`\n`;
-    report += `*   Education: \`${qualification.replace("_", " ").toUpperCase()}\` (Physics/Maths: \`${hasPCM ? "Yes" : "No"}\`)\n`;
+    report += `*   Education: \`${qualLabel}\` (Physics/Maths: \`${hasPCM ? "Yes" : "No"}\`)\n`;
     if (height > 0) report += `*   Height: \`${height} cm\`\n`;
     report += `\n---\n\n`;
 
-    if (eligibleCareers.length > 0) {
-      report += `### ✅ Eligible Entry Routes (${eligibleCareers.length})\n`;
-      eligibleCareers.forEach((c) => {
-        report += `*   **${c.title}** (${c.type})\n`;
-        report += `    *   *Commission*: ${c.commissionType}\n`;
-        report += `    *   *Next Step*: Check active notification status in the **Notifications** tab.\n`;
+    if (eligible.length) {
+      report += `### ✅ Eligible Entry Routes (${eligible.length})\n`;
+      eligible.forEach(({ career, notes }) => {
+        const step = this.data.notifications.find((n) => n.careerId === career.id && n.status !== "Closed");
+        report += `*   **${career.title}** (${career.type})\n`;
+        report += `    *   *Commission*: ${career.commissionType}\n`;
+        notes.forEach((n) => { report += `    *   *Note*: ${n}\n`; });
+        if (step) {
+          const when = step.applyStart ? `${this.fmtDate(step.applyStart)} to ${this.fmtDate(step.applyLastDate)}` : step.expectedWindow;
+          report += `    *   *Next step*: ${step.title} (${step.status}) — ${when}\n`;
+        } else {
+          report += `    *   *Next step*: no open cycle right now. Watch the official site.\n`;
+        }
       });
     } else {
-      report += `### ❌ No Direct Officer Entries Matches\n`;
-      report += `Based on age or qualification limits, you do not meet the direct officer entry criteria. \n`;
+      report += `### ❌ No Direct Officer Entry Matches\n`;
+      report += `Based on age or qualification limits, you do not meet the criteria for the entries I track.\n`;
     }
 
-    if (ineligibleCareers.length > 0) {
-      report += `\n### 🔒 Ineligible / Restricted Entries (${ineligibleCareers.length})\n`;
-      ineligibleCareers.slice(0, 4).forEach((item) => {
-        report += `*   **${item.career.title}**: ${item.reasons.join(", ")}\n`;
-      });
-      if (ineligibleCareers.length > 4) {
-        report += `*   *...and ${ineligibleCareers.length - 4} more entries.*`;
-      }
+    if (restricted.length) {
+      report += `\n### 🔒 Ineligible / Restricted Entries (${restricted.length})\n`;
+      restricted.slice(0, 4).forEach((item) => { report += `*   **${item.career.title}**: ${item.reasons.join("; ")}\n`; });
+      if (restricted.length > 4) report += `*   *...and ${restricted.length - 4} more entries.*\n`;
     }
 
-    report += `\n\n🛡️ *Disclaimer: This report is based on standard criteria and acts as a preliminary check. Always check official UPSC and Armed Forces Recruiting Gazettes before applying.*`;
+    report += `\n🛡️ *Disclaimer: This is a preliminary check against standard criteria. Always read the official notification before applying.*`;
     return report;
   }
 }

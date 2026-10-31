@@ -1,31 +1,89 @@
 /**
- * TKMCE Defence Focus Club - Application Controller
- * Manages UI transitions, card rendering, search filters,
- * eligibility scoring, and chatbot interactivity.
+ * Defence Track AI - Application Controller
+ * UI transitions, date-driven notification statuses, live sync with official sources,
+ * watchlist, calendar export, eligibility matcher and chatbot wiring.
  */
-
 document.addEventListener("DOMContentLoaded", () => {
-  // Ensure we have access to the data and AI engine
   const data = window.DEFENCE_DATA;
   const DefenceAIAssistant = window.DefenceAIAssistant;
-  
-  if (!data || !DefenceAIAssistant) {
-    console.error("Data or AI Engine not loaded successfully.");
+  const Elig = window.DefenceEligibility;
+
+  if (!data || !DefenceAIAssistant || !Elig) {
+    console.error("Data, eligibility or AI engine not loaded successfully.");
     return;
   }
 
-  // Initialize the AI Assistant instance
   const aiAssistant = new DefenceAIAssistant(data);
 
-  // --- STATE ---
-  let activeTab = "dashboard";
-  let activeNotifications = [...data.notifications];
+  // ---------- Helpers ----------
+  const esc = (s) => String(s == null ? "" : s).replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+  const safeUrl = (u) => (/^https?:\/\//i.test(u || "") ? u : "#");
+  const startOfDay = (d) => new Date(d.getFullYear(), d.getMonth(), d.getDate());
+  const parseISO = (s) => (s ? new Date(s + "T00:00:00") : null);
+  const daysUntil = (iso) => Math.round((parseISO(iso) - startOfDay(new Date())) / 86400000);
+  const fmtDate = (iso) => parseISO(iso).toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" });
+  const plural = (n, w) => `${n} ${w}${n === 1 ? "" : "s"}`;
+  const timeAgo = (iso) => {
+    const mins = Math.max(0, Math.round((Date.now() - new Date(iso).getTime()) / 60000));
+    if (mins < 2) return "just now";
+    if (mins < 60) return `${mins} min ago`;
+    const h = Math.round(mins / 60);
+    if (h < 48) return `${h} h ago`;
+    return `${Math.round(h / 24)} days ago`;
+  };
 
-  // --- DOM ELEMENTS ---
+  // ---------- Date-driven statuses ----------
+  const STATUS_ORDER = { Active: 0, Upcoming: 1, Expected: 2, Closed: 3 };
+
+  function computeStatus(n) {
+    const today = startOfDay(new Date());
+    if (n.applyStart && n.applyLastDate) {
+      if (today > parseISO(n.applyLastDate)) return "Closed";
+      if (today >= parseISO(n.applyStart)) return "Active";
+      return "Upcoming";
+    }
+    if (n.applyLastDate && today > parseISO(n.applyLastDate)) return "Closed";
+    return n.expectedWindow ? "Expected" : "Closed";
+  }
+
+  function applyStatuses() {
+    data.notifications.forEach((n) => { n.status = computeStatus(n); });
+    data.notifications.sort((a, b) => {
+      const o = STATUS_ORDER[a.status] - STATUS_ORDER[b.status];
+      if (o) return o;
+      const da = a.applyStart || a.applyLastDate || "9999";
+      const db = b.applyStart || b.applyLastDate || "9999";
+      return a.status === "Closed" ? db.localeCompare(da) : da.localeCompare(db);
+    });
+  }
+
+  function countdownInfo(n) {
+    if (n.status === "Active") {
+      const d = daysUntil(n.applyLastDate);
+      return { text: d === 0 ? "Closes today" : `Closes in ${plural(d, "day")}`, cls: d <= 7 ? "urgent" : "ok" };
+    }
+    if (n.status === "Upcoming") return { text: `Opens in ${plural(daysUntil(n.applyStart), "day")}`, cls: "soon" };
+    if (n.status === "Expected") return { text: "Dates not official yet", cls: "soon" };
+    return { text: `Closed ${plural(-daysUntil(n.applyLastDate), "day")} ago`, cls: "closed" };
+  }
+
+  function nextStepFor(careerId) {
+    return data.notifications.find((n) => n.careerId === careerId && n.status !== "Closed") || null;
+  }
+
+  // ---------- State ----------
+  let liveDoc = null;
+  let watch = new Set();
+  let watchOnly = false;
+  try { watch = new Set(JSON.parse(localStorage.getItem("dtai.watch") || "[]")); } catch { /* storage unavailable */ }
+  const saveWatch = () => { try { localStorage.setItem("dtai.watch", JSON.stringify([...watch])); } catch { /* ignore */ } };
+
+  // ---------- DOM ----------
   const navTabs = document.querySelectorAll(".nav-tab");
   const sections = document.querySelectorAll(".app-section");
   const searchInput = document.getElementById("search-input");
   const filterOrg = document.getElementById("filter-org");
+  const watchFilterBtn = document.getElementById("watch-filter");
   const notificationsContainer = document.getElementById("notifications-container");
   const examsContainer = document.getElementById("exams-container");
   const internshipsContainer = document.getElementById("internships-container");
@@ -34,13 +92,9 @@ document.addEventListener("DOMContentLoaded", () => {
   const chatMessages = document.getElementById("chat-messages");
   const resetChatBtn = document.getElementById("reset-chat-btn");
   const promptButtons = document.querySelectorAll(".prompt-idea-btn");
-
-  // --- MODAL ELEMENTS ---
   const examModal = document.getElementById("exam-modal");
   const modalContent = document.getElementById("modal-content");
   const modalClose = document.getElementById("modal-close");
-
-  // --- ELIGIBILITY CALCULATOR ELEMENTS ---
   const eligibilityForm = document.getElementById("eligibility-form");
   const rangeAge = document.getElementById("age-slider");
   const rangeAgeVal = document.getElementById("age-slider-value");
@@ -48,506 +102,459 @@ document.addEventListener("DOMContentLoaded", () => {
   const rangeHeightVal = document.getElementById("height-slider-value");
   const resultsCard = document.getElementById("results-card");
   const genderCards = document.querySelectorAll(".gender-radio-card");
+  const syncBar = document.getElementById("sync-bar");
+  const nextDeadlineEl = document.getElementById("next-deadline");
+  const keyDatesEl = document.getElementById("key-dates");
+  const liveFeedEl = document.getElementById("live-feed");
+  const sourcesEl = document.getElementById("sources-list");
 
-  // --- INITIALIZATION ---
-  initDashboardCounters();
-  renderNotifications();
-  renderExams();
-  renderInternships();
-  initChatbot();
+  // ---------- Toast ----------
+  function toast(msg) {
+    const t = document.createElement("div");
+    t.className = "toast";
+    t.textContent = msg;
+    document.body.appendChild(t);
+    setTimeout(() => t.classList.add("show"), 10);
+    setTimeout(() => { t.classList.remove("show"); setTimeout(() => t.remove(), 300); }, 3200);
+  }
 
-  // --- TAB NAVIGATION SYSTEM ---
-  navTabs.forEach((tab) => {
-    tab.addEventListener("click", () => {
-      const target = tab.dataset.tab;
-      switchTab(target);
-    });
-  });
-
-  // Export switchTab to global window so HTML triggers can call it
+  // ---------- Tabs ----------
+  navTabs.forEach((tab) => tab.addEventListener("click", () => switchTab(tab.dataset.tab)));
   window.switchTab = switchTab;
 
   function switchTab(tabId) {
-    activeTab = tabId;
-    
-    // Update tabs
-    navTabs.forEach((btn) => {
-      btn.classList.toggle("active", btn.dataset.tab === tabId);
-    });
-
-    // Update sections
-    sections.forEach((sec) => {
-      sec.classList.toggle("active", sec.id === tabId);
-    });
-
-    // Auto-scroll to top of main view
+    navTabs.forEach((btn) => btn.classList.toggle("active", btn.dataset.tab === tabId));
+    sections.forEach((sec) => sec.classList.toggle("active", sec.id === tabId));
     window.scrollTo({ top: 0, behavior: "smooth" });
   }
 
-  // --- 1. DASHBOARD & NOTIFICATIONS CENTRE ---
+  // ---------- Dashboard ----------
   function initDashboardCounters() {
-    const activeCount = data.notifications.filter(n => n.status === "Active").length;
-    const examsCount = data.careers.filter(c => c.type === "Entrance Exam").length;
-    const directCount = data.careers.filter(c => c.type.includes("Direct")).length;
-    const internshipsCount = data.internships.length;
+    const set = (id, v) => { const el = document.getElementById(id); if (el) el.textContent = v; };
+    set("counter-active-notifications", data.notifications.filter((n) => n.status === "Active").length);
+    set("counter-exams", data.careers.filter((c) => c.type === "Entrance Exam").length);
+    set("counter-direct-entries", data.careers.filter((c) => c.type.includes("Direct")).length);
+    set("counter-internships", data.internships.length);
+  }
 
-    const counterActive = document.getElementById("counter-active-notifications");
-    const counterExams = document.getElementById("counter-exams");
-    const counterDirect = document.getElementById("counter-direct-entries");
-    const counterIntern = document.getElementById("counter-internships");
+  function renderNextDeadline() {
+    if (!nextDeadlineEl) return;
+    const events = [];
+    data.notifications.forEach((n) => {
+      if (n.status === "Active") events.push({ d: daysUntil(n.applyLastDate), text: `${n.title} closes`, n, urgent: true });
+      if (n.status === "Upcoming") events.push({ d: daysUntil(n.applyStart), text: `${n.title} opens`, n });
+    });
+    events.sort((a, b) => a.d - b.d);
+    if (!events.length) { nextDeadlineEl.style.display = "none"; return; }
+    const e = events[0];
+    nextDeadlineEl.style.display = "flex";
+    nextDeadlineEl.className = "next-deadline" + (e.urgent && e.d <= 7 ? " urgent" : "");
+    nextDeadlineEl.innerHTML = `
+      <span class="nd-icon">⏰</span>
+      <div><strong>Next date: ${esc(e.text)} ${e.d === 0 ? "today" : "in " + plural(e.d, "day")}</strong>
+      <span>${esc(e.n.organization)} · ${esc(fmtDate(e.n.status === "Active" ? e.n.applyLastDate : e.n.applyStart))}</span></div>`;
+  }
 
-    if (counterActive) counterActive.innerText = activeCount;
-    if (counterExams) counterExams.innerText = examsCount;
-    if (counterDirect) counterDirect.innerText = directCount;
-    if (counterIntern) counterIntern.innerText = internshipsCount;
+  function renderKeyDates() {
+    if (!keyDatesEl) return;
+    const rows = [];
+    data.notifications.forEach((n) => {
+      if (n.applyStart && daysUntil(n.applyStart) >= 0) rows.push({ iso: n.applyStart, label: `${n.title}: applications open`, org: n.organization });
+      if (n.applyLastDate && daysUntil(n.applyLastDate) >= 0) rows.push({ iso: n.applyLastDate, label: `${n.title}: last date to apply`, org: n.organization });
+      if (n.examDate && daysUntil(n.examDate) >= 0) rows.push({ iso: n.examDate, label: `${n.title}: exam`, org: n.organization });
+    });
+    rows.sort((a, b) => a.iso.localeCompare(b.iso));
+    const top = rows.slice(0, 10);
+    keyDatesEl.innerHTML = top.length ? top.map((r) => {
+      const d = parseISO(r.iso);
+      const days = daysUntil(r.iso);
+      return `<li class="kd-row">
+        <div class="kd-date"><b>${d.getDate()}</b><span>${d.toLocaleDateString("en-IN", { month: "short", year: "2-digit" })}</span></div>
+        <div class="kd-label">${esc(r.label)}<small>${esc(r.org)}</small></div>
+        <div class="kd-when">${days === 0 ? "Today" : "in " + plural(days, "day")}</div></li>`;
+    }).join("") : `<li class="kd-empty">No dated events coming up. Check back after the next notification.</li>`;
   }
 
   function renderNotifications() {
     if (!notificationsContainer) return;
-    
     const query = searchInput.value.toLowerCase();
-    const org = filterOrg.value;
+    const org = filterOrg.value.toLowerCase();
 
     const filtered = data.notifications.filter((n) => {
-      const matchesSearch = 
-        n.title.toLowerCase().includes(query) ||
-        n.postName.toLowerCase().includes(query) ||
-        n.description.toLowerCase().includes(query);
-      
-      const matchesOrg = org === "all" || n.organization.toLowerCase() === org.toLowerCase();
-      
-      return matchesSearch && matchesOrg;
+      const hay = `${n.title} ${n.postName} ${n.description} ${n.organization}`.toLowerCase();
+      const matchesOrg = org === "all" || n.organization.toLowerCase().includes(org);
+      return hay.includes(query) && matchesOrg && (!watchOnly || watch.has(n.id));
     });
 
-    if (filtered.length === 0) {
-      notificationsContainer.innerHTML = `
-        <div class="glass-card" style="grid-column: 1 / -1; text-align: center; padding: 40px; color: var(--text-secondary);">
-          🛡️ No active notifications match your search. Try adjusting filters or ask our AI chatbot.
-        </div>
-      `;
+    if (!filtered.length) {
+      notificationsContainer.innerHTML = `<div class="glass-card" style="grid-column: 1 / -1; text-align: center; padding: 40px; color: var(--text-secondary);">
+        🛡️ ${watchOnly ? "Nothing on your watchlist yet. Tap ☆ on a card to follow it." : "No notifications match your search. Try different filters or ask the AI Mentor."}</div>`;
       return;
     }
 
     notificationsContainer.innerHTML = filtered.map((n) => {
-      let statusClass = "closed-card";
-      let statusBadge = "closed";
-      if (n.status === "Active") {
-        statusClass = "active-card";
-        statusBadge = "active";
-      } else if (n.status === "Upcoming") {
-        statusClass = "upcoming-card";
-        statusBadge = "upcoming";
-      }
-
+      const cls = { Active: "active", Upcoming: "upcoming", Expected: "expected", Closed: "closed" }[n.status];
+      const cd = countdownInfo(n);
+      const windowText = n.applyStart ? `${fmtDate(n.applyStart)} – ${fmtDate(n.applyLastDate)}` : (n.expectedWindow || "To be announced");
+      const examText = n.examDate ? fmtDate(n.examDate) : (n.examNote || "To be announced");
+      const hasDates = Boolean(n.applyStart || n.applyLastDate);
+      const watched = watch.has(n.id);
       return `
-        <div class="glass-card notification-card ${statusClass}">
+        <div class="glass-card notification-card ${cls}-card" data-id="${esc(n.id)}">
           <div>
-            <div class="badge-tag ${statusBadge}">${n.status}</div>
-            <div class="notif-org">${n.organization}</div>
-            <h3 class="notif-title">${n.title}</h3>
-            <p class="notif-brief">${n.description}</p>
-            
+            <div class="card-top">
+              <div class="badge-tag ${cls}">${esc(n.status)}</div>
+              <span class="countdown ${cd.cls}">${esc(cd.text)}</span>
+            </div>
+            <div class="notif-org">${esc(n.organization)}</div>
+            <h3 class="notif-title">${esc(n.title)}</h3>
+            <p class="notif-brief">${esc(n.description)}</p>
             <ul class="notif-meta-list">
-              <li><span>Apply Last Date:</span> <strong>${n.applyLastDate}</strong></li>
-              <li><span>Exam Date:</span> <strong>${n.examDate}</strong></li>
-              <li><span>Brief Criteria:</span> <strong>${n.eligibilityBrief}</strong></li>
+              <li><span>Apply window:</span> <strong>${esc(windowText)}</strong></li>
+              <li><span>Exam / selection:</span> <strong>${esc(examText)}</strong></li>
+              <li><span>Criteria:</span> <strong>${esc(n.eligibilityBrief)}</strong></li>
             </ul>
+            <p class="basis-note">${n.status === "Expected" ? "⚠️ " : "✔ "}${esc(n.basis)} · checked ${esc(fmtDate(n.verifiedOn))}</p>
           </div>
-          
           <div class="notif-actions">
-            <a href="${n.applyLink}" target="_blank" class="btn btn-secondary" style="width: 100%; justify-content: center; font-size: 0.85rem;">
-              Apply / Read Gazette 🔗
-            </a>
+            <a href="${esc(safeUrl(n.applyLink))}" target="_blank" rel="noopener noreferrer" class="btn btn-secondary btn-sm">Official site 🔗</a>
+            <button class="btn btn-secondary btn-sm" data-action="ics" ${hasDates ? "" : "disabled title='No official dates yet'"}>📅 Add to calendar</button>
+            <button class="btn btn-secondary btn-sm watch-btn ${watched ? "on" : ""}" data-action="watch" aria-pressed="${watched}">${watched ? "★ Watching" : "☆ Watch"}</button>
           </div>
-        </div>
-      `;
+        </div>`;
     }).join("");
   }
 
-  // Hook up event listeners for dashboard filters
+  if (notificationsContainer) {
+    notificationsContainer.addEventListener("click", (e) => {
+      const btn = e.target.closest("button[data-action]");
+      if (!btn || btn.disabled) return;
+      const id = btn.closest(".notification-card").dataset.id;
+      if (btn.dataset.action === "watch") {
+        if (watch.has(id)) watch.delete(id); else watch.add(id);
+        saveWatch();
+        renderNotifications();
+        toast(watch.has(id) ? "Added to your watchlist" : "Removed from watchlist");
+      } else if (btn.dataset.action === "ics") {
+        downloadIcs(data.notifications.find((n) => n.id === id));
+      }
+    });
+  }
+
   if (searchInput) searchInput.addEventListener("input", renderNotifications);
   if (filterOrg) filterOrg.addEventListener("change", renderNotifications);
+  if (watchFilterBtn) {
+    watchFilterBtn.addEventListener("click", () => {
+      watchOnly = !watchOnly;
+      watchFilterBtn.classList.toggle("on", watchOnly);
+      watchFilterBtn.setAttribute("aria-pressed", String(watchOnly));
+      renderNotifications();
+    });
+  }
 
-  // --- 2. EXAMS EXPLORER ---
+  // ---------- Calendar (.ics) export ----------
+  function icsDate(iso) { return iso.replace(/-/g, ""); }
+  function icsNextDay(iso) { const d = parseISO(iso); d.setDate(d.getDate() + 1); return d.getFullYear() + String(d.getMonth() + 1).padStart(2, "0") + String(d.getDate()).padStart(2, "0"); }
+  function icsText(s) { return String(s).replace(/\\/g, "\\\\").replace(/;/g, "\\;").replace(/,/g, "\\,").replace(/\n/g, "\\n"); }
+
+  function downloadIcs(n) {
+    if (!n) return;
+    const events = [];
+    if (n.applyStart) events.push({ iso: n.applyStart, title: `${n.title}: applications open` });
+    if (n.applyLastDate) events.push({ iso: n.applyLastDate, title: `${n.title}: LAST DATE to apply` });
+    if (n.examDate) events.push({ iso: n.examDate, title: `${n.title}: exam` });
+    const stamp = new Date().toISOString().replace(/[-:]/g, "").replace(/\.\d+/, "");
+    const lines = ["BEGIN:VCALENDAR", "VERSION:2.0", "PRODID:-//Defence Track AI//EN", "CALSCALE:GREGORIAN"];
+    events.forEach((ev, i) => {
+      lines.push("BEGIN:VEVENT", `UID:${n.id}-${i}@defence-track-ai`, `DTSTAMP:${stamp}`,
+        `DTSTART;VALUE=DATE:${icsDate(ev.iso)}`, `DTEND;VALUE=DATE:${icsNextDay(ev.iso)}`,
+        `SUMMARY:${icsText(ev.title)}`,
+        `DESCRIPTION:${icsText(n.basis + ". Confirm on " + n.applyLink)}`,
+        `URL:${n.applyLink}`,
+        "BEGIN:VALARM", "ACTION:DISPLAY", `DESCRIPTION:${icsText(ev.title)}`, "TRIGGER:-P3D", "END:VALARM",
+        "END:VEVENT");
+    });
+    lines.push("END:VCALENDAR");
+    const blob = new Blob([lines.join("\r\n")], { type: "text/calendar" });
+    const a = document.createElement("a");
+    a.href = URL.createObjectURL(blob);
+    a.download = `${n.id}.ics`;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    setTimeout(() => URL.revokeObjectURL(a.href), 1000);
+    toast("Calendar file downloaded (reminder set 3 days before)");
+  }
+
+  // ---------- Live sync with official sources ----------
+  function renderSyncBar(state) {
+    if (!syncBar) return;
+    const curated = `Curated data checked ${fmtDate(data.meta.curatedOn)}`;
+    let dot = "off";
+    let text;
+    if (state === "loading") {
+      dot = "busy"; text = "Checking official sources…";
+    } else if (!liveDoc || !liveDoc.generatedAt) {
+      text = liveDoc ? "Server is running but hasn't completed its first official-site check yet" : "Offline snapshot: live sync needs the Node server or the scheduled Action";
+    } else {
+      const ok = liveDoc.sources.filter((s) => s.ok).length;
+      const ageH = (Date.now() - new Date(liveDoc.generatedAt).getTime()) / 3600000;
+      dot = ok === 0 ? "bad" : ageH > 24 ? "stale" : "ok";
+      text = `Live sync: checked ${timeAgo(liveDoc.generatedAt)} · ${ok}/${liveDoc.sources.length} official sites reachable`;
+      if (liveDoc.refreshing) text += " · refreshing now";
+    }
+    syncBar.innerHTML = `<span class="sync-dot ${dot}"></span><span class="sync-text">${esc(text)}<small>${esc(curated)}</small></span>
+      <button class="btn btn-secondary btn-sm" id="sync-refresh">🔄 Refresh</button>`;
+    const btn = document.getElementById("sync-refresh");
+    if (btn) btn.addEventListener("click", manualRefresh);
+  }
+
+  function renderLiveFeed() {
+    if (!liveFeedEl) return;
+    if (!liveDoc || !liveDoc.sources || !liveDoc.sources.length) {
+      liveFeedEl.innerHTML = `<div class="glass-card feed-empty">Live headlines will appear here once the server has checked the official sites. Until then, use the curated cards above and the official links.</div>`;
+      return;
+    }
+    liveFeedEl.innerHTML = liveDoc.sources.map((s) => {
+      const items = (s.headlines || []).slice(0, 6).map((h) =>
+        `<li><a href="${esc(safeUrl(h.url))}" target="_blank" rel="noopener noreferrer">${esc(h.title)}</a></li>`).join("");
+      const state = s.ok ? `<span class="chip ok">reachable</span>` : `<span class="chip bad" title="${esc(s.error || "")}">unreachable</span>`;
+      return `<div class="glass-card feed-card">
+        <div class="feed-head"><h4>${esc(s.name)}</h4>${state}</div>
+        <ul class="feed-list">${items || `<li class="muted">No recruitment headlines found on the page. Open the site directly.</li>`}</ul>
+        <p class="feed-foot">${s.stale ? "Showing last successful check · " : ""}Checked ${esc(timeAgo(s.checkedAt))} · <a href="${esc(safeUrl(s.url))}" target="_blank" rel="noopener noreferrer">${esc(s.site)}</a></p>
+      </div>`;
+    }).join("");
+  }
+
+  function shareLiveWithAssistant() {
+    aiAssistant.liveMeta = liveDoc && liveDoc.generatedAt ? { generatedAt: liveDoc.generatedAt } : null;
+    aiAssistant.liveFeed = [];
+    if (liveDoc && liveDoc.sources) {
+      liveDoc.sources.forEach((s) => (s.headlines || []).slice(0, 4).forEach((h) => aiAssistant.liveFeed.push({ source: s.name, title: h.title, url: h.url })));
+    }
+  }
+
+  async function loadLive(showBusy) {
+    if (showBusy) renderSyncBar("loading");
+    let doc = null;
+    for (const url of ["/api/live", "data/live.json"]) {
+      try {
+        const r = await fetch(url + (url.includes("?") ? "" : "?t=" + Date.now()), { cache: "no-store" });
+        if (r.ok) { doc = await r.json(); break; }
+      } catch { /* try next */ }
+    }
+    liveDoc = doc;
+    shareLiveWithAssistant();
+    renderSyncBar();
+    renderLiveFeed();
+    return doc;
+  }
+
+  async function manualRefresh() {
+    const btn = document.getElementById("sync-refresh");
+    if (btn) { btn.disabled = true; btn.textContent = "Refreshing…"; }
+    try {
+      const r = await fetch("/api/refresh", { method: "POST" });
+      if (r.status === 429) {
+        const j = await r.json();
+        toast(`Checked recently. Try again in ${Math.ceil(j.retryAfterSeconds / 60)} min.`);
+      } else if (r.ok) {
+        toast("Checking official sites… this takes a few seconds");
+        await new Promise((res) => setTimeout(res, 8000));
+      } else {
+        toast("Refresh isn't available on this host. The scheduled Action updates it instead.");
+      }
+    } catch {
+      toast("Refresh needs the Node server (npm start).");
+    }
+    await loadLive(false);
+  }
+
+  function renderSources() {
+    if (!sourcesEl) return;
+    sourcesEl.innerHTML = data.sources.map((s) => `<a href="${esc(safeUrl(s.url))}" target="_blank" rel="noopener noreferrer">${esc(s.name)}</a>`).join(" · ");
+  }
+
+  // ---------- Exams explorer ----------
+  function statusChipFor(careerId) {
+    const n = nextStepFor(careerId);
+    if (!n) return "";
+    if (n.status === "Active") return `<span class="chip ok">Open · closes ${esc(fmtDate(n.applyLastDate))}</span>`;
+    if (n.status === "Upcoming") return `<span class="chip soon">Opens ${esc(fmtDate(n.applyStart))}</span>`;
+    return `<span class="chip soon">Expected, not official</span>`;
+  }
+
   function renderExams() {
     if (!examsContainer) return;
-
-    examsContainer.innerHTML = data.careers.map((c) => {
-      const genderBadge = c.eligibility.gender.join("/");
-      return `
-        <div class="glass-card exam-card" data-exam-id="${c.id}">
-          <div class="exam-header">
-            <h3>${c.title}</h3>
-            <span class="exam-badge">${c.commissionType.includes("Permanent") ? "PC" : "SSC"}</span>
-          </div>
-          <div class="exam-org">${c.organization}</div>
-          <p class="notif-brief" style="font-size: 0.85rem; height: 60px; overflow: hidden; text-overflow: ellipsis; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical;">
-            ${c.description}
-          </p>
-          
-          <div class="exam-stats">
-            <div>
-              <span>Eligibility</span>
-              <strong>${genderBadge}</strong>
-            </div>
-            <div>
-              <span>Age Range</span>
-              <strong>${c.eligibility.ageMin}-${c.eligibility.ageMax} Yrs</strong>
-            </div>
-          </div>
+    examsContainer.innerHTML = data.careers.map((c) => `
+      <div class="glass-card exam-card" data-exam-id="${esc(c.id)}" tabindex="0" role="button">
+        <div class="exam-header">
+          <h3>${esc(c.title)}</h3>
+          <span class="exam-badge">${c.commissionType.includes("Permanent") ? "PC" : "SSC"}</span>
         </div>
-      `;
-    }).join("");
+        <div class="exam-org">${esc(c.organization)}</div>
+        <p class="notif-brief clamp-3">${esc(c.description)}</p>
+        <div class="exam-chip-row">${statusChipFor(c.id)}</div>
+        <div class="exam-stats">
+          <div><span>Eligibility</span><strong>${esc(c.eligibility.gender.join("/"))}</strong></div>
+          <div><span>Age Range</span><strong>${c.eligibility.ageMin}-${c.eligibility.ageMax} Yrs</strong></div>
+        </div>
+      </div>`).join("");
 
-    // Add click listeners to launch modal
     document.querySelectorAll(".exam-card").forEach((card) => {
-      card.addEventListener("click", () => {
-        const examId = card.dataset.examId;
-        const examData = data.careers.find((c) => c.id === examId);
-        if (examData) {
-          openExamModal(examData);
-        }
-      });
+      const open = () => {
+        const exam = data.careers.find((c) => c.id === card.dataset.examId);
+        if (exam) openExamModal(exam);
+      };
+      card.addEventListener("click", open);
+      card.addEventListener("keydown", (e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); open(); } });
     });
   }
 
   function openExamModal(exam) {
-    const syllabusHtml = exam.syllabi.map(s => `<li>${s}</li>`).join("");
-    const stepsHtml = exam.selectionProcess.map(step => `<li>${step}</li>`).join("");
+    const syllabusHtml = exam.syllabi.map((s) => `<li>${esc(s)}</li>`).join("");
+    const stepsHtml = exam.selectionProcess.map((step) => `<li>${esc(step)}</li>`).join("");
+    const related = data.notifications.filter((n) => n.careerId === exam.id);
+    const relatedHtml = related.length ? `
+      <div>
+        <h4 class="modal-section-title">Current &amp; upcoming cycles</h4>
+        <ul class="modal-bullets">${related.map((n) => {
+          const cd = countdownInfo(n);
+          return `<li><strong>${esc(n.title)}</strong> — ${esc(n.status)} (${esc(cd.text)})${n.applyStart ? `, applications ${esc(fmtDate(n.applyStart))} to ${esc(fmtDate(n.applyLastDate))}` : ""}${n.examDate ? `, exam ${esc(fmtDate(n.examDate))}` : ""}</li>`;
+        }).join("")}</ul>
+      </div>` : "";
 
     modalContent.innerHTML = `
       <div class="modal-title-row">
-        <h2>${exam.title}</h2>
+        <h2>${esc(exam.title)}</h2>
         <p style="color: var(--accent-cyan); font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; font-size: 0.85rem;">
-          ${exam.organization} • ${exam.type}
+          ${esc(exam.organization)} • ${esc(exam.type)}
         </p>
       </div>
-      
       <div class="modal-sections">
-        <div>
-          <h4 class="modal-section-title">Description</h4>
-          <p>${exam.description}</p>
-        </div>
-        
+        <div><h4 class="modal-section-title">Description</h4><p>${esc(exam.description)}</p></div>
+        ${relatedHtml}
         <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
-          <div>
-            <h4 class="modal-section-title">Age limit</h4>
-            <p><strong>${exam.eligibility.ageMin} to ${exam.eligibility.ageMax} Years</strong></p>
-          </div>
-          <div>
-            <h4 class="modal-section-title">Frequence</h4>
-            <p>${exam.frequency}</p>
-          </div>
+          <div><h4 class="modal-section-title">Age limit</h4><p><strong>${exam.eligibility.ageMin} to ${exam.eligibility.ageMax} Years</strong></p></div>
+          <div><h4 class="modal-section-title">Frequency</h4><p>${esc(exam.frequency)}</p></div>
         </div>
-
-        <div>
-          <h4 class="modal-section-title">Educational Qualification</h4>
-          <p>${exam.eligibility.education}</p>
-        </div>
-
-        <div>
-          <h4 class="modal-section-title">Selection Process</h4>
-          <ol class="modal-bullets" style="margin-left: 0;">
-            ${stepsHtml}
-          </ol>
-        </div>
-
-        <div>
-          <h4 class="modal-section-title">Syllabus Highlights</h4>
-          <ul class="modal-bullets">
-            ${syllabusHtml}
-          </ul>
-        </div>
+        <div><h4 class="modal-section-title">Educational Qualification</h4><p>${esc(exam.eligibility.education)}</p></div>
+        <div><h4 class="modal-section-title">Selection Process</h4><ol class="modal-bullets" style="margin-left: 0;">${stepsHtml}</ol></div>
+        <div><h4 class="modal-section-title">Syllabus Highlights</h4><ul class="modal-bullets">${syllabusHtml}</ul></div>
       </div>
-      
       <div style="margin-top: 32px; display: flex; gap: 12px;">
-        <a href="${exam.link}" target="_blank" class="btn btn-primary" style="flex: 1; justify-content: center;">
-          Visit Official Portal 🔗
-        </a>
-        <button class="btn btn-secondary" onclick="document.getElementById('exam-modal').style.display='none'">
-          Close Details
-        </button>
-      </div>
-    `;
-
+        <a href="${esc(safeUrl(exam.link))}" target="_blank" rel="noopener noreferrer" class="btn btn-primary" style="flex: 1; justify-content: center;">Visit Official Portal 🔗</a>
+        <button class="btn btn-secondary" id="modal-close-2">Close Details</button>
+      </div>`;
     examModal.style.display = "flex";
+    const c2 = document.getElementById("modal-close-2");
+    if (c2) c2.addEventListener("click", closeModal);
   }
 
-  if (modalClose) {
-    modalClose.addEventListener("click", () => {
-      examModal.style.display = "none";
-    });
-  }
+  function closeModal() { examModal.style.display = "none"; }
+  if (modalClose) modalClose.addEventListener("click", closeModal);
+  window.addEventListener("click", (e) => { if (e.target === examModal) closeModal(); });
+  window.addEventListener("keydown", (e) => { if (e.key === "Escape") closeModal(); });
 
-  // Close modal if clicking outside
-  window.addEventListener("click", (e) => {
-    if (e.target === examModal) {
-      examModal.style.display = "none";
-    }
-  });
-
-  // --- 3. INTERNSHIPS ---
+  // ---------- Internships ----------
   function renderInternships() {
     if (!internshipsContainer) return;
-
-    internshipsContainer.innerHTML = data.internships.map((intern) => {
-      return `
-        <div class="internship-card">
-          <div class="internship-header">
-            <div class="internship-org">${intern.organization}</div>
-            <h3 class="internship-title">${intern.title}</h3>
-          </div>
-          
-          <div class="internship-meta-row">
-            <span>Duration: ${intern.duration}</span>
-            <span>•</span>
-            <span>Location: ${intern.location}</span>
-          </div>
-          
-          <div class="internship-body">
-            <p style="margin-bottom: 12px;"><strong>Eligibility:</strong> ${intern.eligibility}</p>
-            <p style="margin-bottom: 12px;"><strong>Description:</strong> ${intern.description}</p>
-            <p><strong>Benefits:</strong> ${intern.benefits}</p>
-          </div>
-          
-          <div style="margin-top: 20px; border-top: 1px solid var(--glass-border); padding-top: 12px; font-size: 0.8rem;">
-            <strong>Application Method:</strong> ${intern.applyMethod}
-          </div>
+    internshipsContainer.innerHTML = data.internships.map((i) => `
+      <div class="internship-card">
+        <div class="internship-header">
+          <div class="internship-org">${esc(i.organization)}</div>
+          <h3 class="internship-title">${esc(i.title)}</h3>
         </div>
-      `;
-    }).join("");
+        <div class="internship-meta-row"><span>Duration: ${esc(i.duration)}</span><span>•</span><span>Location: ${esc(i.location)}</span></div>
+        <div class="internship-body">
+          <p style="margin-bottom: 12px;"><strong>Eligibility:</strong> ${esc(i.eligibility)}</p>
+          <p style="margin-bottom: 12px;"><strong>Description:</strong> ${esc(i.description)}</p>
+          <p><strong>Benefits:</strong> ${esc(i.benefits)}</p>
+        </div>
+        <div style="margin-top: 20px; border-top: 1px solid var(--glass-border); padding-top: 12px; font-size: 0.8rem;">
+          <strong>Application Method:</strong> ${esc(i.applyMethod)}
+        </div>
+      </div>`).join("");
   }
 
-  // --- 4. ELIGIBILITY CALCULATOR ---
-  // Range sliders UI updates
-  if (rangeAge) {
-    rangeAge.addEventListener("input", (e) => {
-      rangeAgeVal.innerText = e.target.value;
-    });
-  }
-  if (rangeHeight) {
-    rangeHeight.addEventListener("input", (e) => {
-      rangeHeightVal.innerText = e.target.value === "0" ? "Skip" : e.target.value + " cm";
-    });
-  }
+  // ---------- Eligibility matcher ----------
+  if (rangeAge) rangeAge.addEventListener("input", (e) => { rangeAgeVal.textContent = e.target.value; });
+  if (rangeHeight) rangeHeight.addEventListener("input", (e) => { rangeHeightVal.textContent = e.target.value === "0" ? "Skip" : e.target.value + " cm"; });
 
-  // Gender card selection toggle
   genderCards.forEach((card) => {
     card.addEventListener("click", () => {
-      genderCards.forEach(c => c.classList.remove("selected"));
+      genderCards.forEach((c) => c.classList.remove("selected"));
       card.classList.add("selected");
       const radio = card.querySelector("input");
       if (radio) radio.checked = true;
     });
   });
 
-  if (eligibilityForm) {
-    eligibilityForm.addEventListener("submit", (e) => {
-      e.preventDefault();
-      calculateFormEligibility();
-    });
-  }
+  if (eligibilityForm) eligibilityForm.addEventListener("submit", (e) => { e.preventDefault(); calculateFormEligibility(); });
 
   function calculateFormEligibility() {
-    // Collect values
-    const selectedGenderCard = document.querySelector(".gender-radio-card.selected input");
-    const gender = selectedGenderCard ? selectedGenderCard.value : "male";
-    const age = parseInt(rangeAge.value, 10);
-    const qualification = document.getElementById("qualification-select").value;
-    const hasPCM = document.getElementById("pcm-select").value === "yes";
-    const height = parseInt(rangeHeight.value, 10);
+    const sel = document.querySelector(".gender-radio-card.selected input");
+    const input = {
+      gender: sel ? sel.value : "male",
+      age: parseInt(rangeAge.value, 10),
+      qualification: document.getElementById("qualification-select").value,
+      hasPCM: document.getElementById("pcm-select").value === "yes",
+      height: parseInt(rangeHeight.value, 10)
+    };
 
-    // Show dynamic loader in results pane
-    resultsCard.innerHTML = `
-      <div style="text-align: center; padding: 60px 20px;">
-        <div class="typing-bubble" style="justify-content: center; margin-bottom: 16px;">
-          <div class="typing-dot"></div>
-          <div class="typing-dot"></div>
-          <div class="typing-dot"></div>
-        </div>
-        <p style="color: var(--accent-cyan); font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; font-size: 0.85rem;">
-          Evaluating Indian Armed Forces Entry Criteria...
-        </p>
-      </div>
-    `;
+    resultsCard.innerHTML = `<div style="text-align: center; padding: 60px 20px;">
+      <div class="typing-bubble" style="justify-content: center; margin-bottom: 16px;"><div class="typing-dot"></div><div class="typing-dot"></div><div class="typing-dot"></div></div>
+      <p style="color: var(--accent-cyan); font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; font-size: 0.85rem;">Evaluating Indian Armed Forces entry criteria...</p></div>`;
 
     setTimeout(() => {
-      let eligibleList = [];
-      let restrictedList = [];
+      const { eligible, restricted } = Elig.evaluate(data.careers, input);
+      const total = data.careers.length;
+      const pct = Math.round((eligible.length / total) * 100);
 
-      data.careers.forEach((career) => {
-        let isEligible = true;
-        let reasons = [];
-
-        // Gender Check
-        if (!career.eligibility.gender.includes(gender)) {
-          isEligible = false;
-          reasons.push(`Restricted to ${career.eligibility.gender.join("/")}`);
-        }
-
-        // Age Check
-        if (age < career.eligibility.ageMin) {
-          isEligible = false;
-          reasons.push(`Min age limit is ${career.eligibility.ageMin}`);
-        } else if (age > career.eligibility.ageMax) {
-          isEligible = false;
-          reasons.push(`Max age limit is ${career.eligibility.ageMax}`);
-        }
-
-        // Education & Stream Check
-        const isGrad = ["graduate_non_tech", "graduate_tech", "law", "post_graduate"].includes(qualification);
-        if (career.id === "nda") {
-          if (qualification !== "12th" && !isGrad) {
-            isEligible = false;
-            reasons.push("Requires 12th standard");
-          }
-          if ((career.title.includes("Navy") || career.title.includes("Air Force")) && !hasPCM) {
-            isEligible = false;
-            reasons.push("Air Force/Navy branches require 10+2 PCM");
-          }
-        } else if (career.id === "cds") {
-          if (!isGrad) {
-            isEligible = false;
-            reasons.push("Requires graduation degree");
-          }
-          if (career.title.includes("Air Force Academy") && !hasPCM) {
-            isEligible = false;
-            reasons.push("AFA flight duties require 10+2 PCM");
-          }
-        } else if (career.id === "afcat") {
-          if (!isGrad) {
-            isEligible = false;
-            reasons.push("Requires graduation degree");
-          }
-          if (!hasPCM) {
-            isEligible = false;
-            reasons.push("Requires Physics & Mathematics at 10+2 level");
-          }
-        } else if (career.id === "ssc_tech" || career.id === "tgc") {
-          if (qualification !== "graduate_tech") {
-            isEligible = false;
-            reasons.push("Requires B.E / B.Tech engineering degree");
-          }
-        } else if (career.id === "jag") {
-          if (qualification !== "law") {
-            isEligible = false;
-            reasons.push("Requires LLB degree");
-          }
-        } else if (career.id.startsWith("agniveer")) {
-          if (qualification !== "12th" && !isGrad) {
-            isEligible = false;
-            reasons.push("Requires 10th or 12th standard");
-          }
-        }
-
-        // Height checks
-        if (height > 0) {
-          let minHeight = 157.5; // default male army
-          if (gender === "female") minHeight = 152;
-          if (career.id === "afcat" && career.title.toLowerCase().includes("flying")) {
-            minHeight = 162.5;
-          }
-          if (height < minHeight) {
-            isEligible = false;
-            reasons.push(`Height must be at least ${minHeight} cm`);
-          }
-        }
-
-        if (isEligible) {
-          eligibleList.push(career);
-        } else {
-          restrictedList.push({ career, reasons });
-        }
-      });
-
-      // Render evaluation results
-      const totalOpportunities = data.careers.length;
-      const matchPercent = Math.round((eligibleList.length / totalOpportunities) * 100);
+      const eligibleHtml = eligible.map(({ career, notes }) => {
+        const step = nextStepFor(career.id);
+        const stepHtml = step ? `<div class="match-next">${step.status === "Active" ? "🟢 Open now" : step.status === "Upcoming" ? "🟡 Opens " + esc(fmtDate(step.applyStart)) : "⚪ Expected"}: ${esc(step.title)}</div>` : "";
+        const notesHtml = notes.length ? `<div class="match-notes">${notes.map((n) => "• " + esc(n)).join("<br>")}</div>` : "";
+        return `<div class="match-item">
+          <div><div class="match-item-name">${esc(career.title)}</div>
+          <div class="match-item-type">${esc(career.type)} • Age ${career.eligibility.ageMin}-${career.eligibility.ageMax}</div>${stepHtml}${notesHtml}</div>
+          <span class="match-status-badge">ELIGIBLE</span></div>`;
+      }).join("");
 
       resultsCard.innerHTML = `
         <div class="result-active-view">
           <div class="result-header">
-            <div class="result-heading-flex">
-              <h3>Personalized Eligibility</h3>
-              <span class="score-badge">${matchPercent}% Match</span>
-            </div>
-            <p style="font-size: 0.85rem; margin-top: 4px;">Based on your inputs, we scanned ${totalOpportunities} career pathways.</p>
+            <div class="result-heading-flex"><h3>Personalized Eligibility</h3><span class="score-badge">${pct}% Match</span></div>
+            <p style="font-size: 0.85rem; margin-top: 4px;">Scanned ${total} pathways. Preliminary screen only; the official notification prevails.</p>
           </div>
-
           <div style="margin-bottom: 20px;">
-            <h4 style="font-size: 0.95rem; color: var(--success); text-transform: uppercase; margin-bottom: 12px; letter-spacing: 0.05em;">
-              🎉 Eligible Careers (${eligibleList.length})
-            </h4>
-            
-            ${eligibleList.length === 0 ? `
-              <p style="font-size: 0.9rem; color: var(--text-muted); text-align: center; padding: 16px;">
-                No matches found based on age or qualification. Check out Agniveer or alternative entries.
-              </p>
-            ` : `
-              <div class="eligibility-list-matches">
-                ${eligibleList.map(item => `
-                  <div class="match-item">
-                    <div>
-                      <div class="match-item-name">${item.title}</div>
-                      <div class="match-item-type">${item.type} • Age ${item.eligibility.ageMin}-${item.eligibility.ageMax}</div>
-                    </div>
-                    <span class="match-status-badge">ELIGIBLE</span>
-                  </div>
-                `).join("")}
-              </div>
-            `}
+            <h4 style="font-size: 0.95rem; color: var(--success); text-transform: uppercase; margin-bottom: 12px; letter-spacing: 0.05em;">🎉 Eligible Careers (${eligible.length})</h4>
+            ${eligible.length ? `<div class="eligibility-list-matches">${eligibleHtml}</div>` : `<p style="font-size: 0.9rem; color: var(--text-muted); text-align: center; padding: 16px;">No matches for these inputs. Check the restricted list for what to change.</p>`}
           </div>
-
-          ${restrictedList.length > 0 ? `
-            <div>
-              <h4 style="font-size: 0.95rem; color: var(--text-muted); text-transform: uppercase; margin-bottom: 12px; letter-spacing: 0.05em;">
-                🔒 Restricted Entries (${restrictedList.length})
-              </h4>
-              <div class="eligibility-list-matches" style="max-height: 200px;">
-                ${restrictedList.map(item => `
-                  <div class="match-item" style="opacity: 0.6;">
-                    <div>
-                      <div class="match-item-name">${item.career.title}</div>
-                      <div class="match-item-type" style="color: var(--danger); font-weight: 500;">
-                        ${item.reasons.join(", ")}
-                      </div>
-                    </div>
-                  </div>
-                `).join("")}
-              </div>
-            </div>
-          ` : ""}
-
+          ${restricted.length ? `<div>
+            <h4 style="font-size: 0.95rem; color: var(--text-muted); text-transform: uppercase; margin-bottom: 12px; letter-spacing: 0.05em;">🔒 Restricted Entries (${restricted.length})</h4>
+            <div class="eligibility-list-matches" style="max-height: 200px;">${restricted.map((r) => `<div class="match-item" style="opacity: 0.75;"><div>
+              <div class="match-item-name">${esc(r.career.title)}</div>
+              <div class="match-item-type" style="color: var(--danger); font-weight: 500;">${esc(r.reasons.join("; "))}</div></div></div>`).join("")}</div>
+          </div>` : ""}
           <div style="margin-top: 24px; border-top: 1px solid var(--glass-border); padding-top: 16px;">
-            <button class="btn btn-primary" style="width: 100%; justify-content: center;" onclick="window.switchTab('ai')">
-              Ask AI For preparation Guidelines 🛡️
-            </button>
+            <button class="btn btn-primary" style="width: 100%; justify-content: center;" onclick="window.switchTab('ai')">Ask AI for preparation guidelines 🛡️</button>
           </div>
-        </div>
-      `;
-    }, 600);
+        </div>`;
+    }, 400);
   }
 
-  // --- 5. AI CHAT ASSISTANT CORE ---
+  // ---------- AI chat ----------
   function initChatbot() {
-    // Append welcoming message
-    appendChatBubble("bot", `Jai Hind! 🇮🇳 I am **TKMCE Defence Focus AI**, your Indian Defence Careers Advisor.\n\nI can help you analyze eligibility, understand SSB interview procedures, explain eye-vision and medical standards, and identify active notifications or internships.\n\nType **"Analyze Profile"** to get a structured eligibility check, or ask a question directly!`);
+    appendChatBubble("bot", `Jai Hind! 🇮🇳 I am **Defence Track AI**, your Indian Defence Careers Advisor.\n\nI can check eligibility, explain SSB and medical standards, and tell you which notifications are open **today** or coming up.\n\nType **"Analyze Profile"** for a structured eligibility check, or ask a question directly!`);
   }
 
   function appendChatBubble(sender, text) {
     const bubble = document.createElement("div");
     bubble.classList.add("message", sender);
-
-    const timeString = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-    
-    // Parse simulated Markdown into HTML
-    const formattedHtml = parseMarkdownToHtml(text);
-
-    bubble.innerHTML = `
-      <div class="message-bubble">${formattedHtml}</div>
-      <div class="message-time">${timeString}</div>
-    `;
-
+    const timeString = new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
+    bubble.innerHTML = `<div class="message-bubble">${parseMarkdownToHtml(text)}</div><div class="message-time">${timeString}</div>`;
     chatMessages.appendChild(bubble);
     chatMessages.scrollTop = chatMessages.scrollHeight;
   }
@@ -555,130 +562,81 @@ document.addEventListener("DOMContentLoaded", () => {
   function showTypingIndicator() {
     const indicator = document.createElement("div");
     indicator.classList.add("message", "bot", "typing-indicator-node");
-    indicator.innerHTML = `
-      <div class="message-bubble typing-bubble">
-        <div class="typing-dot"></div>
-        <div class="typing-dot"></div>
-        <div class="typing-dot"></div>
-      </div>
-    `;
+    indicator.innerHTML = `<div class="message-bubble typing-bubble"><div class="typing-dot"></div><div class="typing-dot"></div><div class="typing-dot"></div></div>`;
     chatMessages.appendChild(indicator);
     chatMessages.scrollTop = chatMessages.scrollHeight;
     return indicator;
   }
 
-  function removeTypingIndicator(node) {
-    if (node && node.parentNode) {
-      node.parentNode.removeChild(node);
-    }
-  }
-
   function handleUserMessageSubmit() {
     const text = chatbotInput.value.trim();
     if (!text) return;
-
-    // Clear input
     chatbotInput.value = "";
-
-    // Append user message
     appendChatBubble("user", text);
-
-    // Show loader
     const indicator = showTypingIndicator();
-
-    // Process message on delay to simulate thinking
     setTimeout(() => {
-      removeTypingIndicator(indicator);
-      
-      const responseObj = aiAssistant.processMessage(text);
-      appendChatBubble("bot", responseObj.text);
-
-      // Handle custom callback actions triggered by AI chatbot state machine
-      if (responseObj.action === "start_analysis") {
-        // We can do UI tweaks if necessary
-      } else if (responseObj.action === "finish_analysis") {
-        // Optional: Parse inputs and switch to eligibility screen, or update standard values
-      }
-
-    }, 850);
+      if (indicator.parentNode) indicator.parentNode.removeChild(indicator);
+      applyStatuses(); // so answers always reflect today's date
+      appendChatBubble("bot", aiAssistant.processMessage(text).text);
+    }, 700);
   }
 
   if (chatbotSendBtn) chatbotSendBtn.addEventListener("click", handleUserMessageSubmit);
-  if (chatbotInput) {
-    chatbotInput.addEventListener("keydown", (e) => {
-      if (e.key === "Enter") {
-        handleUserMessageSubmit();
-      }
-    });
-  }
+  if (chatbotInput) chatbotInput.addEventListener("keydown", (e) => { if (e.key === "Enter") handleUserMessageSubmit(); });
+  if (resetChatBtn) resetChatBtn.addEventListener("click", () => { chatMessages.innerHTML = ""; aiAssistant.resetAnalysis(); initChatbot(); });
+  promptButtons.forEach((btn) => btn.addEventListener("click", () => {
+    if (btn.dataset.prompt) { chatbotInput.value = btn.dataset.prompt; handleUserMessageSubmit(); }
+  }));
 
-  if (resetChatBtn) {
-    resetChatBtn.addEventListener("click", () => {
-      chatMessages.innerHTML = "";
-      aiAssistant.resetAnalysis();
-      initChatbot();
-    });
-  }
-
-  // Hook up quick hint prompt ideas
-  promptButtons.forEach((btn) => {
-    btn.addEventListener("click", () => {
-      const promptText = btn.dataset.prompt;
-      if (promptText) {
-        chatbotInput.value = promptText;
-        handleUserMessageSubmit();
-      }
-    });
-  });
-
-  // Helper Markdown-to-HTML parser
+  // Minimal, safe markdown: input is HTML-escaped first, so nothing external can inject markup.
   function parseMarkdownToHtml(text) {
-    // 1. Escape HTML entities to prevent rendering arbitrary DOM nodes
-    let html = text
-      .replace(/&/g, "&amp;")
-      .replace(/</g, "&lt;")
-      .replace(/>/g, "&gt;");
+    let html = String(text).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+    html = html.replace(/^### (.*?)$/gm, "<h3>$1</h3>");
+    html = html.replace(/\*\*(.*?)\*\*/g, "<strong>$1</strong>");
+    html = html.replace(/(^|[^*\w])\*(?!\s)([^*\n]+?)\*(?!\w)/g, "$1<em>$2</em>");
+    html = html.replace(/`([^`]*)`/g, "<code>$1</code>");
+    html = html.replace(/\[([^\]]+)\]\((https?:\/\/[^)\s]+)\)/g, '<a href="$2" target="_blank" rel="noopener noreferrer">$1</a>');
 
-    // 2. Headings (### heading)
-    html = html.replace(/^### (.*?)$/gm, '<h3>$1</h3>');
-    html = html.replace(/^## (.*?)$/gm, '<h2>$1</h2>');
-
-    // 3. Bold (**text**)
-    html = html.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
-
-    // 4. Bullet lists (* item)
-    const lines = html.split('\n');
-    let inList = false;
-    for (let i = 0; i < lines.length; i++) {
-      let line = lines[i].trim();
-      if (line.startsWith('*') || line.startsWith('-')) {
-        let content = line.substring(1).trim();
-        // remove any leading bold tag space details
-        if (!inList) {
-          lines[i] = '<ul><li>' + content + '</li>';
-          inList = true;
-        } else {
-          lines[i] = '<li>' + content + '</li>';
-        }
+    const out = [];
+    let list = null;
+    html.split("\n").forEach((raw) => {
+      const line = raw.trim();
+      const ul = line.match(/^[*-]\s+(.*)$/);
+      const ol = line.match(/^\d+\.\s+(.*)$/);
+      const kind = ul ? "ul" : ol ? "ol" : null;
+      if (kind) {
+        if (list !== kind) { if (list) out.push(`</${list}>`); out.push(`<${kind}>`); list = kind; }
+        out.push(`<li>${(ul || ol)[1]}</li>`);
       } else {
-        if (inList) {
-          lines[i - 1] = lines[i - 1] + '</ul>';
-          inList = false;
-        }
+        if (list) { out.push(`</${list}>`); list = null; }
+        out.push(raw);
       }
-    }
-    if (inList) {
-      lines[lines.length - 1] = lines[lines.length - 1] + '</ul>';
-    }
-    
-    html = lines.join('\n');
-
-    // 5. Code blocks / Inlines (`text`)
-    html = html.replace(/`(.*?)`/g, '<code>$1</code>');
-
-    // 6. External Links ([text](url))
-    html = html.replace(/\[(.*?)\]\((.*?)\)/g, '<a href="$2" target="_blank" style="color: var(--accent-cyan); text-decoration: underline;">$1</a>');
-
-    return html;
+    });
+    if (list) out.push(`</${list}>`);
+    return out.join("\n");
   }
+
+  // ---------- Init ----------
+  function refreshAll() {
+    applyStatuses();
+    initDashboardCounters();
+    renderNextDeadline();
+    renderKeyDates();
+    renderNotifications();
+    renderExams();
+  }
+
+  refreshAll();
+  renderInternships();
+  renderSources();
+  renderSyncBar("loading");
+  initChatbot();
+  loadLive(false);
+
+  // Self-updating behaviour in the browser:
+  //  - statuses & countdowns are recomputed from today's date (also when the tab regains focus)
+  //  - the live official-source feed is re-polled every 15 minutes
+  setInterval(() => loadLive(false), 15 * 60 * 1000);
+  setInterval(refreshAll, 30 * 60 * 1000);
+  document.addEventListener("visibilitychange", () => { if (!document.hidden) { refreshAll(); loadLive(false); } });
 });

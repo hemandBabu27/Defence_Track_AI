@@ -38,7 +38,7 @@ const DEFENCE_DATA = {
       organization: "Indian Armed Forces (Army, Navy, Air Force)",
       type: "Entrance Exam",
       commissionType: "Permanent & Short Service Commission",
-      frequency: "Twice a year (CDS I in Feb/March, CDS II in September/October)",
+      frequency: "Twice a year (CDS I in April, CDS II in September, per the UPSC 2027 calendar)",
       conductingBody: "UPSC (Union Public Service Commission)",
       eligibility: {
         gender: ["male", "female"],
@@ -63,7 +63,7 @@ const DEFENCE_DATA = {
       organization: "Indian Air Force",
       type: "Entrance Exam",
       commissionType: "Permanent & Short Service Commission",
-      frequency: "Twice a year (AFCAT I in Feb, AFCAT II in August)",
+      frequency: "Twice a year (AFCAT 1 notified in Nov, exam Jan-Feb; AFCAT 2 notified in May-Jun, exam Aug)",
       conductingBody: "Indian Air Force (IAF)",
       eligibility: {
         gender: ["male", "female"],
@@ -88,7 +88,7 @@ const DEFENCE_DATA = {
       organization: "Central Armed Police Forces (BSF, CRPF, CISF, ITBP, SSB)",
       type: "Entrance Exam",
       commissionType: "Permanent Gazette Officers",
-      frequency: "Once a year (Usually July/August)",
+      frequency: "Once a year (see the UPSC Annual Calendar)",
       conductingBody: "UPSC (Union Public Service Commission)",
       eligibility: {
         gender: ["male", "female"],
@@ -282,85 +282,145 @@ const DEFENCE_DATA = {
     }
   ],
 
-  // 2. Active / Upcoming Notifications
+  // 2. Notifications
+  // Status (Active / Upcoming / Expected / Closed) is NOT stored here: the app computes it
+  // from applyStart / applyLastDate and today's date, so cards update themselves.
+  // Items with `expectedWindow` have no official dates yet (based on the previous cycle).
   notifications: [
     {
-      id: "notif_001",
-      title: "NDA & NA Exam (II) 2026",
+      id: "notif_nda1_2027",
+      careerId: "nda",
+      title: "NDA & NA Examination (I) 2027",
       organization: "UPSC",
-      postName: "Army, Navy, and Air Force Cadet Entry (158th Course)",
-      releaseDate: "2026-05-15",
-      applyLastDate: "2026-06-12",
-      examDate: "2026-09-06",
-      status: "Active",
-      eligibilityBrief: "12th Pass or appearing (Born between Jan 2, 2008 and Jan 1, 2011)",
-      description: "UPSC has released the notification for the National Defence Academy and Naval Academy Exam (II) 2026. A golden opportunity for 12th standard students.",
-      applyLink: "https://upsconline.nic.in"
+      postName: "Army, Navy and Air Force cadet entry",
+      applyStart: "2026-12-02",
+      applyLastDate: "2026-12-22",
+      examDate: "2027-04-11",
+      eligibilityBrief: "Class 12 pass or appearing (Physics & Maths for Navy and Air Force wings)",
+      description: "Dates follow the UPSC Annual Calendar 2027. UPSC can revise them, so confirm in the official notice when it is published.",
+      basis: "UPSC Annual Calendar 2027 (tentative dates)",
+      applyLink: "https://upsconline.nic.in",
+      sourceUrl: "https://upsc.gov.in",
+      verifiedOn: "2026-10-31"
     },
     {
-      id: "notif_002",
-      title: "CDS Exam (II) 2026",
+      id: "notif_cds1_2027",
+      careerId: "cds",
+      title: "CDS Examination (I) 2027",
       organization: "UPSC",
-      postName: "IMA, INA, AFA, OTA Cadet Officers",
-      releaseDate: "2026-05-15",
-      applyLastDate: "2026-06-12",
-      examDate: "2026-09-06",
-      status: "Active",
-      eligibilityBrief: "Graduate in any stream / B.Tech (Born between July 2, 2002 and July 1, 2007)",
-      description: "Combined Defence Services Examination (II) 2026 is active. The exam is scheduled for September 2026. Non-maths graduates can apply for OTA.",
-      applyLink: "https://upsconline.nic.in"
+      postName: "IMA, INA, AFA and OTA officer cadet entry",
+      applyStart: "2026-12-02",
+      applyLastDate: "2026-12-22",
+      examDate: "2027-04-11",
+      eligibilityBrief: "Graduates and final-year degree students (INA / AFA need Physics & Maths or B.E / B.Tech)",
+      description: "Scheduled together with NDA (I) in the UPSC Annual Calendar 2027. Final-year students can apply.",
+      basis: "UPSC Annual Calendar 2027 (tentative dates)",
+      applyLink: "https://upsconline.nic.in",
+      sourceUrl: "https://upsc.gov.in",
+      verifiedOn: "2026-10-31"
     },
     {
-      id: "notif_003",
-      title: "AFCAT 02/2026",
+      id: "notif_afcat1_2027",
+      careerId: "afcat",
+      title: "AFCAT 01/2027",
       organization: "Indian Air Force",
-      postName: "Commissioned Officers (Flying and Ground Duty)",
-      releaseDate: "2026-06-01",
-      applyLastDate: "2026-06-30",
-      examDate: "2026-08-25",
-      status: "Active",
-      eligibilityBrief: "Graduation (Min 60% marks) & 10+2 PCM (Min 60%)",
-      description: "Indian Air Force invites online applications for AFCAT 02/2026. Entries available for Flying Branch and Ground Duty (Technical and Non-Technical) branches.",
-      applyLink: "https://afcat.cdac.in"
+      postName: "Flying Branch and Ground Duty (Technical and Non-Technical)",
+      applyStart: null,
+      applyLastDate: null,
+      expectedWindow: "Notification expected around November 2026",
+      examDate: null,
+      examNote: "Expected around Jan-Feb 2027",
+      eligibilityBrief: "Graduate with 60% (Physics & Maths at 10+2 for Flying / Technical); Flying age 20-24, Ground Duty 20-26",
+      description: "No official AFCAT 01/2027 notice was confirmed at the time of this update. The previous cycle (AFCAT 01/2026) was notified on 9 Nov 2025 with applications from 17 Nov to 14 Dec 2025.",
+      basis: "Expected from the previous cycle, not yet official",
+      applyLink: "https://afcat.cdac.in",
+      sourceUrl: "https://afcat.cdac.in",
+      verifiedOn: "2026-10-31"
     },
     {
-      id: "notif_004",
-      title: "Army SSC Technical 68th Men & 39th Women Course",
+      id: "notif_ssctech68",
+      careerId: "ssc_tech",
+      title: "Army SSC (Tech)-68 Men & SSCW (Tech)-39 Women",
       organization: "Indian Army",
-      postName: "Short Service Commissioned Officer (Technical)",
-      releaseDate: "2026-07-10",
-      applyLastDate: "2026-08-09",
-      examDate: "Direct SSB (Oct - Nov 2026)",
-      status: "Upcoming",
-      eligibilityBrief: "Engineering Degree or final year students (Age 20-27)",
-      description: "Direct entry for B.E/B.Tech graduates. No written test. Selection based on SSB Interview scores. Shortlisting threshold varies by engineering branch.",
-      applyLink: "https://joinindianarmy.nic.in"
+      postName: "Short Service Commission (Technical), course starting April 2027",
+      applyStart: "2026-07-09",
+      applyLastDate: "2026-08-07",
+      examDate: null,
+      examNote: "No written exam. SSB after shortlisting",
+      eligibilityBrief: "Engineering degree or final-year students, age 20-27 (381 vacancies: 350 men, 31 women)",
+      description: "Applications for this course are closed. Shortlisted candidates receive SSB calls through the joinindianarmy.nic.in login.",
+      basis: "Army recruitment notice (applications closed)",
+      applyLink: "https://joinindianarmy.nic.in",
+      sourceUrl: "https://joinindianarmy.nic.in",
+      verifiedOn: "2026-10-31"
     },
     {
-      id: "notif_005",
-      title: "CAPF (Assistant Commandant) Exam 2026",
+      id: "notif_ssctech69",
+      careerId: "ssc_tech",
+      title: "Army SSC (Tech)-69 (next course)",
+      organization: "Indian Army",
+      postName: "Short Service Commission (Technical)",
+      applyStart: null,
+      applyLastDate: null,
+      expectedWindow: "Likely January 2027 (the 67th course opened on 7 Jan 2026)",
+      examDate: null,
+      examNote: "No written exam. SSB after shortlisting",
+      eligibilityBrief: "Engineering degree or final-year students, age 20-27",
+      description: "Not announced yet. Keep your engineering CGPA and documents ready, since shortlisting is by marks.",
+      basis: "Expected from the previous cycle, not yet official",
+      applyLink: "https://joinindianarmy.nic.in",
+      sourceUrl: "https://joinindianarmy.nic.in",
+      verifiedOn: "2026-10-31"
+    },
+    {
+      id: "notif_nda2_2027",
+      careerId: "nda",
+      title: "NDA & NA Examination (II) 2027",
+      organization: "UPSC",
+      postName: "Army, Navy and Air Force cadet entry",
+      applyStart: "2027-05-12",
+      applyLastDate: "2027-06-01",
+      examDate: "2027-09-19",
+      eligibilityBrief: "Class 12 pass or appearing (Physics & Maths for Navy and Air Force wings)",
+      description: "Second NDA cycle of 2027 per the UPSC Annual Calendar.",
+      basis: "UPSC Annual Calendar 2027 (tentative dates)",
+      applyLink: "https://upsconline.nic.in",
+      sourceUrl: "https://upsc.gov.in",
+      verifiedOn: "2026-10-31"
+    },
+    {
+      id: "notif_cds2_2027",
+      careerId: "cds",
+      title: "CDS Examination (II) 2027",
+      organization: "UPSC",
+      postName: "IMA, INA, AFA and OTA officer cadet entry",
+      applyStart: "2027-05-12",
+      applyLastDate: "2027-06-01",
+      examDate: "2027-09-19",
+      eligibilityBrief: "Graduates and final-year degree students",
+      description: "Second CDS cycle of 2027 per the UPSC Annual Calendar.",
+      basis: "UPSC Annual Calendar 2027 (tentative dates)",
+      applyLink: "https://upsconline.nic.in",
+      sourceUrl: "https://upsc.gov.in",
+      verifiedOn: "2026-10-31"
+    },
+    {
+      id: "notif_capf_2027",
+      careerId: "capf",
+      title: "CAPF (Assistant Commandant) Examination 2027",
       organization: "UPSC",
       postName: "Assistant Commandant (BSF, CRPF, CISF, ITBP, SSB)",
-      releaseDate: "2026-04-20",
-      applyLastDate: "2026-05-18",
-      examDate: "2026-08-02",
-      status: "Closed",
-      eligibilityBrief: "Graduate in any stream (Age 20-25)",
-      description: "UPSC CAPF (AC) 2026 recruitment notification. Applications are closed. Exam will be held in offline mode with two papers on the same day.",
-      applyLink: "https://www.upsc.gov.in"
-    },
-    {
-      id: "notif_006",
-      title: "DRDO Junior Research Fellowship (JRF) - CAIR Lab",
-      organization: "DRDO (Centre for Artificial Intelligence & Robotics)",
-      postName: "JRF in Computer Science / AI / Electronics",
-      releaseDate: "2026-05-28",
-      applyLastDate: "2026-06-25",
-      examDate: "Interview (July 2026)",
-      status: "Active",
-      eligibilityBrief: "B.E/B.Tech in CS/EE with valid GATE score OR M.E/M.Tech first class.",
-      description: "DRDO-CAIR, Bangalore is hiring Junior Research Fellows for projects in Artificial Intelligence, Cyber Security, and Robotics. Initial fellowship is for 2 years.",
-      applyLink: "https://drdo.gov.in"
+      applyStart: null,
+      applyLastDate: null,
+      expectedWindow: "Dates are in the UPSC Annual Calendar 2027 PDF",
+      examDate: null,
+      examNote: "See UPSC calendar",
+      eligibilityBrief: "Graduate in any stream, age 20-25",
+      description: "Check the UPSC Annual Calendar 2027 (upsc.gov.in, Examinations > Examination Calendar) for the notification and exam dates.",
+      basis: "Dates not captured here, see the official calendar",
+      applyLink: "https://upsc.gov.in",
+      sourceUrl: "https://upsc.gov.in",
+      verifiedOn: "2026-10-31"
     }
   ],
 
@@ -448,6 +508,20 @@ const DEFENCE_DATA = {
     ]
   }
 };
+
+// Metadata used by the UI: when the curated data was last checked and where it comes from.
+DEFENCE_DATA.meta = {
+  curatedOn: "2026-10-31",
+  note: "Curated snapshot. Live headlines from the official sites are merged on top when the server (or the scheduled GitHub Action) has refreshed them."
+};
+DEFENCE_DATA.sources = [
+  { name: "UPSC", url: "https://upsc.gov.in" },
+  { name: "Join Indian Army", url: "https://joinindianarmy.nic.in" },
+  { name: "IAF AFCAT", url: "https://afcat.cdac.in" },
+  { name: "Join Indian Navy", url: "https://www.joinindiannavy.gov.in" },
+  { name: "Agnipath Vayu (IAF)", url: "https://agnipathvayu.cdac.in" },
+  { name: "DRDO", url: "https://www.drdo.gov.in" }
+];
 
 // Export the data if running in Node/ESM environment (optional fallback),
 // otherwise bind to global window object for browser access.
