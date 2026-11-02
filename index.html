@@ -3,16 +3,17 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Defence Track AI | Career Portal & AI Advisor</title>
-  <meta name="description" content="AI-integrated career tracker and advisor for Indian Armed Forces (Army, Navy, Air Force), DRDO internships, and entrance examinations.">
+  <title>Defence Focus Club | TKMCE • Defence Track AI</title>
+  <meta name="description" content="TKMCE Defence Focus Club career portal and AI advisor for Indian Armed Forces (Army, Navy, Air Force), DRDO internships, and entrance examinations.">
+  <link rel="icon" type="image/png" href="logo.png">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@700;800&family=Outfit:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Source+Sans+3:ital,wght@0,300;0,400;0,500;0,600;0,700;0,800;1,400;1,600&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
 
-  <!-- Tricolor Top Accent Stripe -->
+  <!-- Top Tricolor Accent Line -->
   <div class="tricolor-stripe">
     <div class="saffron"></div>
     <div class="white"></div>
@@ -22,202 +23,176 @@
   <!-- Header & Navigation -->
   <header>
     <div class="header-container">
-      <div class="logo-wrapper" onclick="switchTab('dashboard')">
-        <div class="logo-text">
-          <h1>Defence Track AI</h1>
+      <div class="header-top">
+        <div class="header-brand" onclick="switchTab('dashboard')">
+          <img src="logo.png" alt="Defence Focus Club TKMCE Logo" class="brand-logo">
+          <div class="brand-text">
+            <h1>Defence Focus Club</h1>
+            <span class="brand-subtitle">TKMCE • Defence Track AI</span>
+          </div>
+        </div>
+
+        <div class="header-right">
+          <div class="sync-pill" title="Synchronized with official government portals">
+            <span class="status-dot"></span>
+            <span id="sync-status-label">Official Feeds Synced</span>
+          </div>
+          <button class="btn btn-sm btn-outline" id="btn-manual-sync" title="Sync official notifications">
+            <span id="sync-icon">🔄</span> Sync
+          </button>
         </div>
       </div>
-      
+
       <nav>
         <ul>
-          <li><button class="nav-tab active" data-tab="dashboard">🔔 Dashboard</button></li>
+          <li><button class="nav-tab active" data-tab="dashboard">🔔 Recruitment Alerts</button></li>
           <li><button class="nav-tab" data-tab="exams">📋 Exams Explorer</button></li>
           <li><button class="nav-tab" data-tab="eligibility">📊 Eligibility Matcher</button></li>
-          <li><button class="nav-tab" data-tab="internships">🔬 Internships</button></li>
+          <li><button class="nav-tab" data-tab="internships">🔬 DRDO & Internships</button></li>
           <li><button class="nav-tab" data-tab="ai">🛡️ AI Mentor</button></li>
-          <li><button class="nav-tab" data-tab="roadmap">🗺️ Career Roadmap</button></li>
+          <li><button class="nav-tab" data-tab="directory">🏛️ Official Directory</button></li>
         </ul>
       </nav>
     </div>
   </header>
 
   <!-- Main View Container -->
-  <main class="container" style="padding-top: 30px; padding-bottom: 50px;">
+  <main class="container">
 
-    <!-- ================= SECTION 1: DASHBOARD ================= -->
+    <!-- ================= SECTION 1: RECRUITMENT ALERTS (DASHBOARD) ================= -->
     <section id="dashboard" class="app-section active">
-      <div class="hero" style="padding: 15px 0 25px;">
-        <div class="hero-actions">
-          <button class="btn btn-primary" onclick="switchTab('ai')">Chat with AI Mentor 🛡️</button>
-          <button class="btn btn-secondary" onclick="switchTab('eligibility')">Check Eligibility 📊</button>
+      
+      <!-- Metrics Bar -->
+      <div class="metrics-grid">
+        <div class="metric-card">
+          <div class="metric-num" id="counter-active-notifications">-</div>
+          <div class="metric-label">Active Vacancies</div>
+        </div>
+        <div class="metric-card">
+          <div class="metric-num" id="counter-exams">-</div>
+          <div class="metric-label">Entrance Exams</div>
+        </div>
+        <div class="metric-card">
+          <div class="metric-num" id="counter-direct-entries">-</div>
+          <div class="metric-label">Direct Technical Entries</div>
+        </div>
+        <div class="metric-card">
+          <div class="metric-num" id="counter-internships">-</div>
+          <div class="metric-label">DRDO / DPSU Internships</div>
         </div>
       </div>
 
-      <!-- Live sync status + next date -->
-      <div id="sync-bar" class="sync-bar" role="status" aria-live="polite"></div>
-      <div id="next-deadline" class="next-deadline" style="display:none;"></div>
-
-      <!-- Quick Metrics -->
-      <div class="stats-grid">
-        <div class="glass-card stat-card">
-          <div class="stat-icon">🔔</div>
-          <div class="stat-info">
-            <h3 id="counter-active-notifications">-</h3>
-            <p>Active Vacancies</p>
-          </div>
-        </div>
-        <div class="glass-card stat-card gold">
-          <div class="stat-icon">📋</div>
-          <div class="stat-info">
-            <h3 id="counter-exams">-</h3>
-            <p>Entrance Exams</p>
-          </div>
-        </div>
-        <div class="glass-card stat-card">
-          <div class="stat-icon">🎖️</div>
-          <div class="stat-info">
-            <h3 id="counter-direct-entries">-</h3>
-            <p>Direct Entry Schemes</p>
-          </div>
-        </div>
-        <div class="glass-card stat-card gold">
-          <div class="stat-icon">🔬</div>
-          <div class="stat-info">
-            <h3 id="counter-internships">-</h3>
-            <p>Internships & training</p>
-          </div>
-        </div>
-      </div>
-
-      <!-- Active Notifications Header & Filter Row -->
-      <div class="dashboard-header">
-        <div>
-          <h2 style="font-size: 1.5rem; margin-bottom: 4px;">Recruitment Alerts & Opportunities</h2>
-          <p style="font-size: 0.9rem;">Track live applications and upcoming gazettes for Officers & Agniveers.</p>
+      <!-- Controls Row: Search & Filters -->
+      <div class="controls-card">
+        <div class="controls-title">
+          <h2>Recruitment Alerts & Official Gazettes</h2>
+          <p>Verified from UPSC, Army, Navy, Air Force, Coast Guard, and DRDO official portals.</p>
         </div>
         
-        <div class="search-filter-row">
-          <input type="text" id="search-input" class="search-input" placeholder="Search vacancies (e.g. CDS, Technical, JRF)...">
-          <select id="filter-org" class="filter-select">
-            <option value="all">All Orgs</option>
+        <div class="controls-inputs">
+          <input type="text" id="search-input" class="form-input" placeholder="Search vacancies (e.g. CDS, NDA, Technical, DRDO, Navy)...">
+          
+          <select id="filter-org" class="form-select">
+            <option value="all">All Organizations</option>
             <option value="upsc">UPSC</option>
             <option value="indian army">Indian Army</option>
             <option value="indian navy">Indian Navy</option>
             <option value="indian air force">Indian Air Force</option>
             <option value="drdo">DRDO</option>
+            <option value="indian coast guard">Coast Guard</option>
           </select>
-          <button type="button" id="watch-filter" class="btn btn-secondary watch-filter" aria-pressed="false">★ Watchlist</button>
+
+          <select id="filter-status" class="form-select">
+            <option value="all">All Statuses</option>
+            <option value="Active">Active Only</option>
+            <option value="Upcoming">Upcoming</option>
+          </select>
         </div>
       </div>
 
-      <!-- Notifications Cards Container -->
-      <div class="notifications-grid" id="notifications-container">
-        <!-- Rendered dynamically by app.js -->
+      <!-- Notifications Container -->
+      <div class="cards-grid" id="notifications-container">
+        <!-- Rendered dynamically -->
       </div>
-
-      <!-- Upcoming key dates -->
-      <div class="dashboard-header" style="margin-top: 8px;">
-        <div>
-          <h2 style="font-size: 1.5rem; margin-bottom: 4px;">Key Dates Ahead</h2>
-          <p style="font-size: 0.9rem;">Openings, deadlines and exams in date order. Counts update automatically each day.</p>
-        </div>
-      </div>
-      <ul class="key-dates glass-card" id="key-dates"></ul>
-
-      <!-- Live official-source feed -->
-      <div class="dashboard-header" style="margin-top: 40px;">
-        <div>
-          <h2 style="font-size: 1.5rem; margin-bottom: 4px;">Live from Official Sites</h2>
-          <p style="font-size: 0.9rem;">Headlines read automatically from UPSC, Army, IAF, Navy, Agnipath Vayu and DRDO pages. Always open the link and confirm on the official site.</p>
-        </div>
-      </div>
-      <div class="feed-grid" id="live-feed"></div>
     </section>
 
 
     <!-- ================= SECTION 2: EXAMS EXPLORER ================= -->
     <section id="exams" class="app-section">
-      <div style="margin-bottom: 30px;">
-        <h2 style="font-size: 1.8rem; margin-bottom: 6px;">Indian Defence Entrance Examinations</h2>
-        <p>Click on any entry pathway to explore detailed paper syllabi, selection boards, age thresholds, and training durations.</p>
+      <div class="section-intro">
+        <h2>Indian Defence Entrance Examinations & Direct Schemes</h2>
+        <p>Explore selection criteria, exam pattern, age limits, SSB stages, and official application portals.</p>
       </div>
 
-      <div class="exams-grid" id="exams-container">
-        <!-- Rendered dynamically by app.js -->
+      <div class="cards-grid" id="exams-container">
+        <!-- Rendered dynamically -->
       </div>
     </section>
 
 
-    <!-- ================= SECTION 3: ELIGIBILITY CALCULATOR ================= -->
+    <!-- ================= SECTION 3: ELIGIBILITY MATCHER ================= -->
     <section id="eligibility" class="app-section">
-      <div style="margin-bottom: 30px;">
-        <h2 style="font-size: 1.8rem; margin-bottom: 6px;">Armed Forces Commission Eligibility Matcher</h2>
-        <p>Input your parameters to run a rule-based scan against Army, Navy, Air Force, CAPF, and Agniveer guidelines.</p>
+      <div class="section-intro">
+        <h2>Armed Forces Commission Eligibility Matcher</h2>
+        <p>Input your credentials to calculate eligible commissioned officer pathways and entry schemes.</p>
       </div>
 
-      <div class="eligibility-layout">
-        <!-- Left Column: Input Form -->
-        <form id="eligibility-form" class="glass-card" style="display: flex; flex-direction: column; gap: 10px;">
-          
-          <div class="form-group">
-            <label>1. Select Gender</label>
-            <div class="gender-radio-group">
-              <div class="gender-radio-card selected">
-                <input type="radio" name="gender" value="male" checked>
-                <span>♂️ Male</span>
-              </div>
-              <div class="gender-radio-card">
-                <input type="radio" name="gender" value="female">
-                <span>♀️ Female</span>
-              </div>
+      <div class="matcher-layout">
+        <!-- Form Column -->
+        <form id="eligibility-form" class="clean-card form-card">
+          <div class="form-field">
+            <label>1. Gender</label>
+            <div class="gender-toggle">
+              <label class="gender-btn active">
+                <input type="radio" name="gender" value="male" checked> Male
+              </label>
+              <label class="gender-btn">
+                <input type="radio" name="gender" value="female"> Female
+              </label>
             </div>
           </div>
 
-          <div class="form-group">
-            <label for="age-slider">2. Age (in years): <span class="range-value" id="age-slider-value">20</span></label>
-            <div class="range-wrap">
-              <input type="range" id="age-slider" class="range-slider" min="15" max="35" value="20">
-            </div>
+          <div class="form-field">
+            <label for="age-slider">2. Age: <strong id="age-slider-value">20</strong> Years</label>
+            <input type="range" id="age-slider" class="range-input" min="15" max="35" value="20">
           </div>
 
-          <div class="form-group">
+          <div class="form-field">
             <label for="qualification-select">3. Highest Qualification</label>
-            <select id="qualification-select" class="select-custom">
+            <select id="qualification-select" class="form-select full-width">
               <option value="12th">10th / 12th standard (School)</option>
               <option value="graduate_non_tech">Graduate Degree (B.Sc, B.A, B.Com, BBA)</option>
               <option value="graduate_tech" selected>Engineering Graduate (B.Tech / B.E)</option>
-              <option value="law">Law Graduate (LLB - 3 or 5 Years course)</option>
-              <option value="post_graduate">Post Graduate Degree (M.Tech, M.Sc, M.A)</option>
+              <option value="law">Law Graduate (LLB - 3 or 5 Years)</option>
+              <option value="post_graduate">Post Graduate (M.Tech, M.Sc, M.A)</option>
             </select>
           </div>
 
-          <div class="form-group">
-            <label for="pcm-select">4. Had Physics & Maths in 12th Standard?</label>
-            <select id="pcm-select" class="select-custom">
-              <option value="yes" selected>Yes, had PCM subjects</option>
-              <option value="no">No, other stream (Arts / Commerce / Bio)</option>
+          <div class="form-field">
+            <label for="pcm-select">4. Had Physics & Mathematics in 12th?</label>
+            <select id="pcm-select" class="form-select full-width">
+              <option value="yes" selected>Yes, had PCM in 10+2</option>
+              <option value="no">No, other stream (Arts / Commerce / Biology)</option>
             </select>
           </div>
 
-          <div class="form-group">
-            <label for="height-slider">5. Height: <span class="range-value" id="height-slider-value">170 cm</span></label>
-            <div class="range-wrap">
-              <input type="range" id="height-slider" class="range-slider" min="0" max="210" value="170">
-            </div>
-            <p style="font-size: 0.75rem; color: var(--text-muted); margin-top: 4px;">Set to 0 to skip height constraints.</p>
+          <div class="form-field">
+            <label for="height-slider">5. Height: <strong id="height-slider-value">170 cm</strong></label>
+            <input type="range" id="height-slider" class="range-input" min="0" max="210" value="170">
+            <span class="field-hint">Set to 0 to skip height constraints.</span>
           </div>
 
-          <button type="submit" class="btn btn-primary" style="margin-top: 10px; width: 100%; justify-content: center;">
-            Calculate Eligibility Match 🚀
+          <button type="submit" class="btn btn-primary full-width" style="margin-top: 6px;">
+            Calculate Eligible Pathways 🚀
           </button>
         </form>
 
-        <!-- Right Column: Results Pane -->
-        <div class="glass-card eligibility-results-card" id="results-card">
-          <div class="result-placeholder">
-            <div class="result-placeholder-icon">📊</div>
+        <!-- Results Column -->
+        <div class="clean-card results-card" id="results-card">
+          <div class="results-placeholder">
+            <div class="placeholder-icon">📊</div>
             <h3>Eligibility Calculations</h3>
-            <p>Submit your parameters on the left to see matching Commissioned and Non-Commissioned pathways.</p>
+            <p>Select your criteria on the left to see matching entries across Army, Navy, Air Force, and Coast Guard.</p>
           </div>
         </div>
       </div>
@@ -226,149 +201,111 @@
 
     <!-- ================= SECTION 4: INTERNSHIPS ================= -->
     <section id="internships" class="app-section">
-      <div style="margin-bottom: 20px;">
-        <h2 style="font-size: 1.8rem; margin-bottom: 6px;">Defence Internships & Scientific Student Projects</h2>
-        <p>Explore hands-on apprentice training under NATS, student semester projects in DRDO research facilities, and vocational courses in DPSUs.</p>
+      <div class="section-intro">
+        <h2>Defence Internships & Scientific Student Projects</h2>
+        <p>Apprentice training under NATS, student semester projects in DRDO research facilities, and Defence PSU training.</p>
       </div>
 
-      <div class="internships-grid" id="internships-container">
-        <!-- Rendered dynamically by app.js -->
+      <div class="cards-grid" id="internships-container">
+        <!-- Rendered dynamically -->
       </div>
     </section>
 
 
-    <!-- ================= SECTION 5: AI CHAT ASSISTANT ================= -->
+    <!-- ================= SECTION 5: AI MENTOR ================= -->
     <section id="ai" class="app-section">
-      <div style="margin-bottom: 20px;">
-        <h2 style="font-size: 1.8rem; margin-bottom: 6px;">Defence Track AI Assistant</h2>
-        <p>Receive immediate guidelines on physical tests, visual benchmarks, SSB preparation, and specific career entry tracks.</p>
+      <div class="section-intro">
+        <h2>Defence Track AI Mentor</h2>
+        <p>Immediate guidance on SSB interview stages, physical/medical benchmarks, eyesight criteria, salaries, and careers.</p>
       </div>
 
-      <div class="ai-layout">
+      <div class="chat-layout">
         <!-- Sidebar Hints -->
-        <div class="ai-sidebar">
-          <div class="glass-card ai-hint-card">
-            <h4 style="margin-bottom: 8px; color: var(--accent-cyan);">💡 Career Guidance Hacks</h4>
-            <p>Ask anything about SSB stages, physical medical benchmarks, DRDO application channels, or type "Analyze Profile" for dynamic questionnaire flow.</p>
-          </div>
-          
-          <div class="glass-card" style="flex-grow: 1;">
-            <h4 style="margin-bottom: 12px; font-size: 0.95rem; text-transform: uppercase; letter-spacing: 0.05em;">Suggested Prompts</h4>
-            <ul class="ai-prompt-ideas">
-              <li><button class="prompt-idea-btn" data-prompt="Analyze profile">📊 Analyze my career profile</button></li>
-              <li><button class="prompt-idea-btn" data-prompt="What is the eye vision limit for flying branch?">👁️ Vision criteria (Flying Branch)</button></li>
-              <li><button class="prompt-idea-btn" data-prompt="How does the 5-day SSB interview work?">🎯 5-Day SSB procedure details</button></li>
-              <li><button class="prompt-idea-btn" data-prompt="What are the common medical rejections?">🏥 Flat Foot & common rejections</button></li>
-              <li><button class="prompt-idea-btn" data-prompt="Are there internships at DRDO?">🔬 DRDO student project scheme</button></li>
-            </ul>
+        <div class="chat-sidebar">
+          <div class="clean-card sidebar-box">
+            <h4>💡 Quick Topics</h4>
+            <div class="prompt-chips">
+              <button class="chip-btn" data-prompt="Analyze profile">📊 Analyze my career profile</button>
+              <button class="chip-btn" data-prompt="What is the salary of a Lieutenant under 7th CPC?">💰 Lieutenant Salary & MSP</button>
+              <button class="chip-btn" data-prompt="What is the eye vision limit for flying branch?">👁️ Flying Branch Eyesight Rules</button>
+              <button class="chip-btn" data-prompt="How does the 5-day SSB interview work?">🎯 5-Day SSB procedure details</button>
+              <button class="chip-btn" data-prompt="What are the opportunities for women in armed forces?">👩‍✈️ Women in Defence entries</button>
+              <button class="chip-btn" data-prompt="Are there internships at DRDO?">🔬 DRDO student project scheme</button>
+            </div>
           </div>
         </div>
 
         <!-- Chat Container -->
-        <div class="glass-card ai-chat-card">
+        <div class="clean-card chat-box">
           <div class="chat-header">
-            <div class="chat-agent-info">
-              <div class="chat-agent-avatar">🤖</div>
-              <div class="chat-agent-text">
-                <h4>Defence Track AI Guide</h4>
-                <span>Active Duty Online</span>
+            <div class="chat-title-group">
+              <span class="bot-icon">🤖</span>
+              <div>
+                <strong>AI Career Advisor</strong>
+                <span class="bot-status">Active • Official Portals Connected</span>
               </div>
             </div>
-            <button id="reset-chat-btn" class="reset-chat-btn">Reset Chat 🔄</button>
+            <button id="reset-chat-btn" class="btn btn-sm btn-ghost">Reset Chat 🔄</button>
           </div>
-          
-          <!-- Message history stream -->
+
           <div class="chat-messages" id="chat-messages">
-            <!-- Rendered dynamically -->
+            <!-- Messages stream -->
           </div>
-          
-          <!-- Bottom Send Box -->
-          <div class="chat-input-wrapper">
-            <input type="text" id="chatbot-input" class="chat-input" placeholder="Inquire about SSB tips, eyesight, direct entries, DRDO labs...">
-            <button id="chatbot-send-btn" class="chat-send-btn">➔</button>
+
+          <div class="chat-input-bar">
+            <input type="text" id="chatbot-input" class="chat-input" placeholder="Ask about SSB stages, eyesight standards, direct entries, DRDO labs...">
+            <button id="chatbot-send-btn" class="btn btn-primary btn-send">Send</button>
           </div>
         </div>
       </div>
     </section>
 
 
-    <!-- ================= SECTION 6: ROADMAPS ================= -->
-    <section id="roadmap" class="app-section">
-      <div style="margin-bottom: 30px; text-align: center;">
-        <h2 style="font-size: 1.8rem; margin-bottom: 6px;">Commissioned Officer Career Timeline</h2>
-        <p>From submitting an application to taking the oath of commission as a Lieutenant, Sub Lieutenant, or Flying Officer.</p>
+    <!-- ================= SECTION 6: OFFICIAL DIRECTORY ================= -->
+    <section id="directory" class="app-section">
+      <div class="section-intro">
+        <h2>Official Government Defence Portals Directory</h2>
+        <p>Verified, official websites for application submissions, gazette notices, and candidate helplines.</p>
       </div>
 
-      <div class="roadmap-timeline">
-        <div class="timeline-step">
-          <span class="timeline-tag">Phase 1</span>
-          <div class="timeline-content glass-card">
-            <h3>Notification & Application Selection</h3>
-            <p>Keep track of UPSC gazettes or direct recruitment entries (SSC Tech, TGC, JAG, NCC). Eligible candidates apply online. Non-written entries are shortlisted purely based on graduation/engineering cut-off scores.</p>
-          </div>
-        </div>
-
-        <div class="timeline-step gold">
-          <span class="timeline-tag">Phase 2</span>
-          <div class="timeline-content glass-card">
-            <h3>5-Day Service Selection Board (SSB)</h3>
-            <p>Candidates report to Selection Centres (e.g., Allahabad, Bhopal, Bangalore, Kapurthala). Over five days, they face psychological screening (PP&DT), Group GTO tasks, individual obstacles, personal interviews, and the board conference. This screens for Officer Like Qualities (OLQs).</p>
-          </div>
-        </div>
-
-        <div class="timeline-step">
-          <span class="timeline-tag">Phase 3</span>
-          <div class="timeline-content glass-card">
-            <h3>Specialist Medical Boards</h3>
-            <p>Recommended candidates undergo comprehensive medical examination at Military Hospitals (SMB/AMB). Checked for eye vision limits, flat foot, knock knees, DNS, cardiovascular health, and surgical standards. Temporary issues get 42 days for appeal.</p>
-          </div>
-        </div>
-
-        <div class="timeline-step gold">
-          <span class="timeline-tag">Phase 4</span>
-          <div class="timeline-content glass-card">
-            <h3>All India Merit List & Academy Training</h3>
-            <p>UPSC and Recruiting Directorates prepare the final merit list based on written scores and SSB marks. Selected candidates report to their respective Service Training Academies (IMA Dehradun, OTA Chennai, INA Ezhimala, AFA Dundigal) for rigorous military training (49 to 74 weeks).</p>
-          </div>
-        </div>
-
-        <div class="timeline-step">
-          <span class="timeline-tag">Phase 5</span>
-          <div class="timeline-content glass-card">
-            <h3>Passing Out Parade & Commission</h3>
-            <p>The culmination of academy training. On passing out, gentlemen and lady cadets take the oath of allegiance to the Constitution, receive their ranks (Stars on Shoulders), and get commissioned as Group A Gazetted Officers in their respective forces.</p>
-          </div>
-        </div>
+      <div class="cards-grid" id="official-portals-container">
+        <!-- Rendered dynamically -->
       </div>
     </section>
 
   </main>
 
-  <!-- Exam Detailed Modal Overlay -->
+  <!-- Exam Details Modal Overlay -->
   <div class="modal-overlay" id="exam-modal">
-    <div class="modal-container">
-      <button class="modal-close" id="modal-close">✖</button>
-      <div class="modal-content" id="modal-content">
+    <div class="modal-box">
+      <button class="modal-close-btn" id="modal-close" aria-label="Close modal">✕</button>
+      <div class="modal-body" id="modal-content">
         <!-- Rendered dynamically -->
       </div>
     </div>
   </div>
 
-  <!-- Footer Section -->
+  <!-- Toast Notification Element -->
+  <div class="toast-wrapper" id="toast"></div>
+
+  <!-- Minimal Clean Footer -->
   <footer>
-    <div class="container">
-      <p class="footer-text">🇮🇳 Defence Track AI - Indian Defence Career Portal & Advisor. Built with Pride.</p>
-      <p class="footer-sources">Official sources: <span id="sources-list"></span></p>
+    <div class="container footer-content">
+      <div class="footer-brand">
+        <img src="logo.png" alt="Logo" class="footer-logo">
+        <div>
+          <strong>Defence Focus Club</strong>
+          <p>TKM College of Engineering (TKMCE), Kollam, Kerala</p>
+        </div>
+      </div>
       <p class="footer-disclaimer">
-        Disclaimer: This portal is a student-built informational resource. Dates marked "expected" are estimates from earlier cycles, and UPSC calendar dates can change. 
-        It is NOT associated with the Indian Ministry of Defence, UPSC, or any government body. Candidates must verify exam criteria on official recruitments websites before applying.
+        Disclaimer: Information is compiled directly from official Government of India gazettes (UPSC, Join Indian Army, Join Indian Navy, IAF AFCAT, DRDO RAC). Always cross-reference notifications on the respective official websites before applying.
       </p>
     </div>
   </footer>
 
-  <!-- Include Script Files -->
+  <!-- Scripts -->
   <script src="data.js"></script>
-  <script src="eligibility.js"></script>
   <script src="ai-assistant.js"></script>
   <script src="app.js"></script>
 </body>
