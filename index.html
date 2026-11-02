@@ -50,7 +50,7 @@
           <li><button class="nav-tab" data-tab="eligibility">📊 Eligibility Matcher</button></li>
           <li><button class="nav-tab" data-tab="internships">🔬 DRDO & Internships</button></li>
           <li><button class="nav-tab" data-tab="ai">🛡️ AI Mentor</button></li>
-          <li><button class="nav-tab" data-tab="directory">🏛️ Official Directory</button></li>
+          <li><button class="nav-tab" data-tab="directory">🏛️ Official Directory & Pay</button></li>
         </ul>
       </nav>
     </div>
@@ -124,6 +124,47 @@
         <p>Explore selection criteria, exam pattern, age limits, SSB stages, and official application portals.</p>
       </div>
 
+      <!-- Exam Filters & Search Controls -->
+      <div class="controls-card" style="margin-bottom: 20px;">
+        <div class="controls-inputs" style="max-width: 100%; width: 100%;">
+          <input type="text" id="exam-search-input" class="form-input" placeholder="Search exams by name, syllabus, or academy...">
+          
+          <select id="filter-exam-wing" class="form-select">
+            <option value="all">All Wings / Services</option>
+            <option value="Tri-Services">Tri-Services (NDA / CDS / JAG / NCC)</option>
+            <option value="Army">Indian Army 🎖️</option>
+            <option value="Navy">Indian Navy ⚓</option>
+            <option value="Air Force">Indian Air Force ✈️</option>
+            <option value="Coast Guard">Coast Guard 🛡️</option>
+            <option value="DRDO">DRDO Scientific</option>
+          </select>
+
+          <select id="filter-exam-type" class="form-select">
+            <option value="all">All Commission Types</option>
+            <option value="Entrance Exam">Written Entrance Exam</option>
+            <option value="Direct Entry">Direct Entry (No Written Exam)</option>
+          </select>
+        </div>
+      </div>
+
+      <!-- Live Exam Countdown Ticker Card -->
+      <div class="clean-card countdown-strip" style="margin-bottom: 24px;">
+        <div class="countdown-info">
+          <span class="status-badge upcoming">UPCOMING EXAM TARGET</span>
+          <h3 id="countdown-title">CDS Examination (I) 2027</h3>
+          <p id="countdown-date-display">Scheduled Date: April 11, 2027 • UPSC Official Calendar</p>
+        </div>
+        <div class="countdown-digits">
+          <div class="digit-cell"><span id="cd-days">--</span><small>Days</small></div>
+          <div class="digit-cell"><span id="cd-hours">--</span><small>Hours</small></div>
+          <div class="digit-cell"><span id="cd-mins">--</span><small>Mins</small></div>
+          <div class="digit-cell"><span id="cd-secs">--</span><small>Secs</small></div>
+        </div>
+        <div class="countdown-action">
+          <button class="btn btn-sm btn-primary" id="btn-ics-download">📅 Save Calendar Event</button>
+        </div>
+      </div>
+
       <div class="cards-grid" id="exams-container">
         <!-- Rendered dynamically -->
       </div>
@@ -134,7 +175,7 @@
     <section id="eligibility" class="app-section">
       <div class="section-intro">
         <h2>Armed Forces Commission Eligibility Matcher</h2>
-        <p>Input your credentials to calculate eligible commissioned officer pathways and entry schemes.</p>
+        <p>Input your parameters to calculate matching Commissioned and Non-Commissioned pathways across Army, Navy, Air Force, and Coast Guard.</p>
       </div>
 
       <div class="matcher-layout">
@@ -160,7 +201,7 @@
           <div class="form-field">
             <label for="qualification-select">3. Highest Qualification</label>
             <select id="qualification-select" class="form-select full-width">
-              <option value="12th">10th / 12th standard (School)</option>
+              <option value="12th">10th / 12th standard (School Appearing / Passed)</option>
               <option value="graduate_non_tech">Graduate Degree (B.Sc, B.A, B.Com, BBA)</option>
               <option value="graduate_tech" selected>Engineering Graduate (B.Tech / B.E)</option>
               <option value="law">Law Graduate (LLB - 3 or 5 Years)</option>
@@ -179,7 +220,16 @@
           <div class="form-field">
             <label for="height-slider">5. Height: <strong id="height-slider-value">170 cm</strong></label>
             <input type="range" id="height-slider" class="range-input" min="0" max="210" value="170">
-            <span class="field-hint">Set to 0 to skip height constraints.</span>
+            <span class="field-hint">Minimum: 157.5 cm (Army/Navy), 162.5 cm (Flying), 152 cm (Women). Set to 0 to skip.</span>
+          </div>
+
+          <!-- Integrated BMI & Weight Evaluator -->
+          <div class="form-field" style="border-top: 1px solid var(--border); padding-top: 12px; margin-top: 4px;">
+            <label for="weight-input">6. Weight (in kg) for Military BMI check:</label>
+            <div style="display: flex; gap: 8px;">
+              <input type="number" id="weight-input" class="form-input" value="68" min="35" max="140" style="width: 120px;">
+              <span class="field-hint" style="align-self: center;" id="bmi-preview-label">BMI: ~23.5 (Normal Cadre)</span>
+            </div>
           </div>
 
           <button type="submit" class="btn btn-primary full-width" style="margin-top: 6px;">
@@ -203,7 +253,26 @@
     <section id="internships" class="app-section">
       <div class="section-intro">
         <h2>Defence Internships & Scientific Student Projects</h2>
-        <p>Apprentice training under NATS, student semester projects in DRDO research facilities, and Defence PSU training.</p>
+        <p>Apprentice training under NATS, student semester capstone projects in DRDO research facilities, and Defence PSU training.</p>
+      </div>
+
+      <!-- Internship Controls -->
+      <div class="controls-card" style="margin-bottom: 20px;">
+        <div class="controls-inputs" style="max-width: 100%; width: 100%;">
+          <input type="text" id="intern-search-input" class="form-input" placeholder="Search internships by lab, domain, or skills (e.g. AI, Propulsion, Drone, GTRE)...">
+          
+          <select id="filter-intern-org" class="form-select">
+            <option value="all">All Establishments</option>
+            <option value="DRDO">DRDO Laboratories</option>
+            <option value="ADA">Aeronautical Development Agency (ADA)</option>
+            <option value="BEL">Bharat Electronics Limited (BEL)</option>
+            <option value="HAL">Hindustan Aeronautics Limited (HAL)</option>
+          </select>
+
+          <button class="btn btn-outline btn-sm" id="btn-show-noc-template">
+            📄 DRDO HoD Recommendation Format
+          </button>
+        </div>
       </div>
 
       <div class="cards-grid" id="internships-container">
@@ -261,11 +330,44 @@
     </section>
 
 
-    <!-- ================= SECTION 6: OFFICIAL DIRECTORY ================= -->
+    <!-- ================= SECTION 6: OFFICIAL DIRECTORY & PAY MATRIX ================= -->
     <section id="directory" class="app-section">
       <div class="section-intro">
-        <h2>Official Government Defence Portals Directory</h2>
-        <p>Verified, official websites for application submissions, gazette notices, and candidate helplines.</p>
+        <h2>Official Government Portals Directory & 7th CPC Pay Scale</h2>
+        <p>Verified, official websites for application submissions, gazette notices, candidate helplines, and officer rank pay matrix.</p>
+      </div>
+
+      <!-- 7th CPC Armed Forces Pay Matrix Section -->
+      <div class="clean-card" style="margin-bottom: 28px;">
+        <div style="margin-bottom: 14px;">
+          <h3 style="font-size: 1.15rem; color: var(--primary);">💰 7th CPC Armed Forces Commissioned Officer Pay Matrix</h3>
+          <p style="font-size: 0.85rem; color: var(--text-muted);">Starting scale for Lieutenants, Sub Lieutenants, and Flying Officers includes Basic Pay + ₹15,500/month Military Service Pay (MSP) + 50% DA.</p>
+        </div>
+
+        <div style="overflow-x: auto;">
+          <table class="minimal-table">
+            <thead>
+              <tr>
+                <th>Pay Level</th>
+                <th>🎖️ Army Rank</th>
+                <th>⚓ Navy Rank</th>
+                <th>✈️ Air Force Rank</th>
+                <th>🛡️ Coast Guard</th>
+                <th>Basic Pay Range</th>
+                <th>MSP</th>
+              </tr>
+            </thead>
+            <tbody id="pay-matrix-body">
+              <!-- Rendered dynamically -->
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- Portals Header -->
+      <div style="margin-bottom: 14px;">
+        <h3 style="font-size: 1.15rem; color: var(--primary);">🏛️ Verified Government Recruitment Portals</h3>
+        <p style="font-size: 0.85rem; color: var(--text-muted);">Direct links to verified candidate portals and recruitment directorates.</p>
       </div>
 
       <div class="cards-grid" id="official-portals-container">
@@ -281,6 +383,50 @@
       <button class="modal-close-btn" id="modal-close" aria-label="Close modal">✕</button>
       <div class="modal-body" id="modal-content">
         <!-- Rendered dynamically -->
+      </div>
+    </div>
+  </div>
+
+  <!-- NOC Recommendation Format Modal -->
+  <div class="modal-overlay" id="noc-modal">
+    <div class="modal-box">
+      <button class="modal-close-btn" id="noc-modal-close" aria-label="Close modal">✕</button>
+      <div class="modal-body">
+        <div class="modal-header-section">
+          <h2 class="modal-title">DRDO Student Project - College HoD Letter Format</h2>
+          <p style="font-size: 13px; color: var(--text-muted);">Standard format required by DRDO laboratories for accepting student academic projects.</p>
+        </div>
+        <div style="background: var(--bg); border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 16px; font-family: monospace; font-size: 12px; line-height: 1.6; white-space: pre-wrap;" id="noc-template-text">
+(ON COLLEGE OFFICIAL LETTERHEAD)
+
+To,
+The Director,
+[DRDO Laboratory Name, e.g., GTRE / CAIR / ADE / DLRL]
+[City, Pin Code]
+
+Subject: Request for Final Year B.Tech/M.Tech Student Academic Project
+
+Respected Sir/Madam,
+
+This is to certify that the following student(s) is/are bona fide students of [College Name, e.g., TKM College of Engineering, Kollam], currently studying in [Semester / Year] of [Department, e.g., Mechanical / Computer Science / Electronics Engineering]:
+
+1. Student Name: _______________________ Roll No: ________________
+2. Student Name: _______________________ Roll No: ________________
+
+The college has No Objection to the student(s) undertaking their final semester project at your esteemed organization under the guidance of DRDO scientists. The student(s) will strictly adhere to the security, confidentiality, and discipline rules of DRDO.
+
+Thanking you.
+
+Yours sincerely,
+
+(Signature & Seal)
+Head of Department / Principal
+College Name & Contact
+        </div>
+        <div style="margin-top: 18px; display: flex; gap: 8px;">
+          <button class="btn btn-primary btn-sm" id="btn-copy-noc">📋 Copy Template Text</button>
+          <button class="btn btn-outline btn-sm" onclick="document.getElementById('noc-modal').style.display='none'">Close</button>
+        </div>
       </div>
     </div>
   </div>
