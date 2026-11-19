@@ -20,6 +20,10 @@ document.addEventListener("DOMContentLoaded", () => {
   let activeTab = "dashboard";
   let activeNotifications = [...data.notifications];
   let liveOfficialSources = [];
+  let savedNotificationIds = new Set();
+  let savedOnly = false;
+  try { savedNotificationIds = new Set(JSON.parse(localStorage.getItem("dfc-saved-notifications") || "[]")); } catch (_) {}
+  const savedFilterButton = document.getElementById("btn-saved-filter");
 
   // --- DOM ELEMENTS ---
   const navTabs = document.querySelectorAll(".nav-tab");
@@ -249,6 +253,7 @@ document.addEventListener("DOMContentLoaded", () => {
     const status = filterStatus ? filterStatus.value : "all";
 
     const filtered = activeNotifications.filter((n) => {
+      if (savedOnly && !savedNotificationIds.has(n.id || n.title)) return false;
       const matchesSearch =
         n.title.toLowerCase().includes(query) ||
         (n.postName && n.postName.toLowerCase().includes(query)) ||
@@ -298,6 +303,7 @@ document.addEventListener("DOMContentLoaded", () => {
           </div>
           
           <div class="card-actions">
+            <button type="button" class="btn btn-sm btn-outline btn-save-notice" data-notice-id="${n.id || n.title}" aria-pressed="${savedNotificationIds.has(n.id || n.title)}">${savedNotificationIds.has(n.id || n.title) ? "★ Saved" : "☆ Save"}</button>
             <a href="${n.applyLink}" target="_blank" class="btn btn-primary btn-sm" style="flex: 1;">
               Apply Online 🔗
             </a>
@@ -317,6 +323,22 @@ document.addEventListener("DOMContentLoaded", () => {
       .join("");
   }
 
+  notificationsContainer.addEventListener("click", (event) => {
+    const button = event.target.closest(".btn-save-notice");
+    if (!button) return;
+    const id = button.dataset.noticeId;
+    if (savedNotificationIds.has(id)) savedNotificationIds.delete(id); else savedNotificationIds.add(id);
+    try { localStorage.setItem("dfc-saved-notifications", JSON.stringify([...savedNotificationIds])); } catch (_) {}
+    renderNotifications();
+    showToast(savedNotificationIds.has(id) ? "Recruitment notice saved." : "Saved notice removed.");
+  });
+  if (savedFilterButton) savedFilterButton.addEventListener("click", () => {
+    savedOnly = !savedOnly;
+    savedFilterButton.classList.toggle("active", savedOnly);
+    savedFilterButton.setAttribute("aria-pressed", String(savedOnly));
+    savedFilterButton.textContent = savedOnly ? "★ Saved only" : "☆ Saved";
+    renderNotifications();
+  });
   window.renderNotifications = renderNotifications;
 
   if (searchInput) searchInput.addEventListener("input", renderNotifications);
