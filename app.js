@@ -22,6 +22,8 @@ document.addEventListener("DOMContentLoaded", () => {
   let liveOfficialSources = [];
   let savedNotificationIds = new Set();
   let savedOnly = false;
+  let applicationStatuses = {};
+  try { applicationStatuses = JSON.parse(localStorage.getItem("dfc-application-status") || "{}"); } catch (_) {}
   try { savedNotificationIds = new Set(JSON.parse(localStorage.getItem("dfc-saved-notifications") || "[]")); } catch (_) {}
   const savedFilterButton = document.getElementById("btn-saved-filter");
 
@@ -304,6 +306,12 @@ document.addEventListener("DOMContentLoaded", () => {
           
           <div class="card-actions">
             <button type="button" class="btn btn-sm btn-outline btn-save-notice" data-notice-id="${n.id || n.title}" aria-pressed="${savedNotificationIds.has(n.id || n.title)}">${savedNotificationIds.has(n.id || n.title) ? "★ Saved" : "☆ Save"}</button>
+            <select class="form-select notice-status-select" data-notice-id="${n.id || n.title}" aria-label="Application status">
+              <option value="Not started" ${(!applicationStatuses[n.id || n.title] || applicationStatuses[n.id || n.title] === "Not started") ? "selected" : ""}>Not started</option>
+              <option value="Interested" ${applicationStatuses[n.id || n.title] === "Interested" ? "selected" : ""}>Interested</option>
+              <option value="Preparing" ${applicationStatuses[n.id || n.title] === "Preparing" ? "selected" : ""}>Preparing</option>
+              <option value="Applied" ${applicationStatuses[n.id || n.title] === "Applied" ? "selected" : ""}>Applied</option>
+            </select>
             <a href="${n.applyLink}" target="_blank" class="btn btn-primary btn-sm" style="flex: 1;">
               Apply Online 🔗
             </a>
@@ -323,6 +331,13 @@ document.addEventListener("DOMContentLoaded", () => {
       .join("");
   }
 
+  notificationsContainer.addEventListener("change", (event) => {
+    const select = event.target.closest(".notice-status-select");
+    if (!select) return;
+    applicationStatuses[select.dataset.noticeId] = select.value;
+    try { localStorage.setItem("dfc-application-status", JSON.stringify(applicationStatuses)); } catch (_) {}
+    showToast("Application status updated.");
+  });
   notificationsContainer.addEventListener("click", (event) => {
     const button = event.target.closest(".btn-save-notice");
     if (!button) return;
