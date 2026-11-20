@@ -1,422 +1,56 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Defence Focus Club | TKMCE • Defence Track AI</title>
-  <meta name="description" content="TKMCE Defence Focus Club career portal and AI advisor for Indian Armed Forces (Army, Navy, Air Force), DRDO internships, and entrance examinations.">
-  <link rel="icon" type="image/png" href="logo.png">
-  <link rel="shortcut icon" href="logo.png">
-  <link rel="apple-touch-icon" href="logo.png">
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Source+Sans+3:ital,wght@0,300;0,400;0,500;0,600;0,700;0,800;1,400;1,600&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="style.css">
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Defence Track AI · DFC TKMCE</title>
+<meta name="description" content="A focused defence careers dashboard for Indian Armed Forces recruitment, exams, eligibility and internships.">
+<link rel="icon" href="logo.png"><link rel="apple-touch-icon" href="logo.png">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Source+Sans+3:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+:root{--navy:#102b4d;--blue:#24558a;--bg:#f4f7fb;--card:#fff;--ink:#172b43;--muted:#64758a;--line:#dce5ef;--soft:#eaf1f9;--green:#16815c;--radius:14px}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--ink);font:15px 'Source Sans 3',sans-serif}
+a{color:var(--blue)}button,input,select{font:inherit}header{background:var(--navy);color:white;position:sticky;top:0;z-index:20;box-shadow:0 6px 20px #0b20382a}
+.top{max-width:1180px;margin:auto;padding:14px 20px 0}.brand{display:flex;align-items:center;gap:12px}.brand img{width:44px;height:44px;object-fit:contain}.brand h1{font-size:20px;margin:0}.brand small{display:block;color:#b9c9db}.headrow{display:flex;justify-content:space-between;align-items:center;gap:15px}.sync{font-size:12px;color:#c7d5e5}.sync:before{content:'●';color:#66c59b;margin-right:7px}.btn{border:1px solid var(--line);border-radius:9px;padding:9px 12px;background:#fff;color:var(--ink);cursor:pointer;text-decoration:none;display:inline-flex;align-items:center;justify-content:center;gap:6px;font-weight:600}.btn:hover{filter:brightness(.97)}.btn-primary{background:var(--blue);border-color:var(--blue);color:white}.btn-outline{background:transparent;color:inherit;border-color:#b8c9dc}.btn-sm{padding:7px 10px;font-size:13px}.nav{display:flex;gap:4px;overflow:auto;margin-top:13px;border-bottom:1px solid #ffffff24}.nav-tab{border:0;background:transparent;color:#bdcce0;padding:12px 14px;cursor:pointer;white-space:nowrap;border-bottom:2px solid transparent}.nav-tab.active{color:#fff;border-color:#8bb8ec;background:#ffffff0c}.container{max-width:1180px;margin:24px auto;padding:0 20px 36px}.app-section{display:none}.app-section.active{display:block}.section-intro{margin:0 0 18px}.section-intro h2{margin:0 0 4px;font-size:23px}.section-intro p{margin:0;color:var(--muted)}.metrics-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:18px}.metric-card,.clean-card,.controls-card,.item-card,.portal-card{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);padding:16px;box-shadow:0 2px 8px #12305006}.metric-num{font-size:26px;font-weight:800;color:var(--blue)}.metric-label{font-size:12px;color:var(--muted)}.controls-card{margin-bottom:16px}.controls-title h2{font-size:18px;margin:0}.controls-title p{color:var(--muted);margin:2px 0 12px}.controls-inputs{display:flex;gap:8px;flex-wrap:wrap}.form-input,.form-select,.chat-input{min-width:0;border:1px solid var(--line);border-radius:9px;padding:10px 12px;background:#fff;color:var(--ink);flex:1}.form-input:focus,.form-select:focus,.chat-input:focus{outline:2px solid #c5d9f1;border-color:#7ba5d2}.cards-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}.item-card{display:flex;flex-direction:column;justify-content:space-between;gap:14px}.card-header-row{display:flex;gap:8px;align-items:center;flex-wrap:wrap}.status-badge{border-radius:999px;background:var(--soft);color:var(--blue);padding:3px 8px;font-size:11px;font-weight:700}.status-badge.active{background:#e8f6ef;color:var(--green)}.status-badge.upcoming{background:#fff4df;color:#996516}.card-org{font-size:12px;font-weight:700;color:var(--blue);margin:7px 0 2px}.card-ref{font-size:12px;color:var(--muted)}.card-title{font-size:18px;margin:5px 0}.card-desc{color:var(--muted);margin:6px 0;line-height:1.45}.card-meta-list{padding:0;list-style:none;display:grid;gap:5px;margin:10px 0}.card-meta-list li{font-size:13px;color:var(--muted)}.card-meta-list strong{color:var(--ink)}.card-actions{display:flex;gap:8px;flex-wrap:wrap;align-items:center}.card-actions .form-select{flex:1}.section-intro+.controls-card{margin-top:0}.countdown-strip{display:flex;justify-content:space-between;align-items:center;gap:14px;flex-wrap:wrap;margin-bottom:16px}.countdown-info h3{margin:5px 0}.countdown-digits{display:flex;gap:6px}.digit-cell{min-width:54px;text-align:center;background:var(--soft);border-radius:9px;padding:7px}.digit-cell span{display:block;font-size:20px;font-weight:800;color:var(--blue)}.digit-cell small{font-size:10px;color:var(--muted)}.matcher-layout,.chat-layout{display:grid;grid-template-columns:minmax(280px,.8fr) minmax(0,1.2fr);gap:14px}.form-card{display:grid;gap:14px}.form-field{display:grid;gap:6px}.form-field label{font-weight:600}.form-field .field-hint{font-size:12px;color:var(--muted)}.gender-toggle{display:flex;gap:8px}.gender-btn{border:1px solid var(--line);border-radius:9px;padding:9px 14px}.full-width{width:100%}.results-placeholder{text-align:center;color:var(--muted);padding:28px 10px}.results-placeholder h3{color:var(--ink)}.chat-box{display:flex;flex-direction:column;min-height:480px}.chat-header{display:flex;justify-content:space-between;align-items:center;gap:8px;border-bottom:1px solid var(--line);padding-bottom:12px}.bot-status{display:block;font-size:12px;color:var(--muted)}.chat-messages{flex:1;overflow:auto;padding:12px 0;min-height:260px}.chat-input-bar{display:flex;gap:8px;border-top:1px solid var(--line);padding-top:12px}.chat-sidebar h4{margin:0 0 8px}.prompt-chips{display:grid;gap:7px}.chip-btn{border:1px solid var(--line);border-radius:9px;background:#f8fafc;padding:8px 10px;text-align:left;cursor:pointer}.modal-overlay{position:fixed;inset:0;z-index:100;background:#07172b99;display:none;align-items:center;justify-content:center;padding:16px}.modal-box{background:white;border-radius:14px;width:min(720px,100%);max-height:90vh;overflow:auto;padding:22px;position:relative}.modal-close-btn{position:absolute;right:12px;top:12px;border:1px solid var(--line);background:white;border-radius:50%;width:32px;height:32px;cursor:pointer}.modal-title{margin:0 0 8px}.modal-detail-block{margin:14px 0}.modal-list{padding-left:20px}.toast-wrapper{position:fixed;bottom:18px;right:18px;z-index:200}.toast-msg{background:var(--navy);color:white;border-radius:9px;padding:10px 14px;margin-top:8px;box-shadow:0 5px 18px #0002}footer{border-top:1px solid var(--line);background:white;padding:20px}.footer-content{max-width:1180px;margin:auto;display:flex;gap:15px;align-items:center;justify-content:space-between}.footer-brand{display:flex;align-items:center;gap:10px}.footer-logo{width:36px;height:36px;object-fit:contain}.footer-brand p,.footer-disclaimer{font-size:12px;color:var(--muted);margin:0}.footer-disclaimer{max-width:650px}
+@media(max-width:760px){.metrics-grid{grid-template-columns:repeat(2,1fr)}.cards-grid,.matcher-layout,.chat-layout{grid-template-columns:1fr}.headrow{align-items:flex-start}.sync{display:none}.container{padding:0 14px 28px}.nav-tab{padding:11px 10px;font-size:13px}.controls-inputs>*{flex-basis:100%}.footer-content{flex-direction:column;align-items:flex-start}.countdown-strip{align-items:flex-start}}
+</style>
 </head>
 <body>
-
-  <!-- Top Tricolor Accent Line -->
-  <div class="tricolor-stripe">
-    <div class="saffron"></div>
-    <div class="white"></div>
-    <div class="green"></div>
-  </div>
-
-  <!-- Header & Navigation -->
-  <header>
-    <div class="header-container">
-      <div class="header-top">
-        <div class="header-brand" onclick="switchTab('dashboard')">
-          <img src="logo.png" alt="Defence Focus Club TKMCE Logo" class="brand-logo">
-          <div class="brand-text">
-            <h1>Defence Focus Club</h1>
-            <span class="brand-subtitle">TKMCE • Defence Track AI</span>
-          </div>
-        </div>
-
-        <div class="header-right">
-          <div class="sync-pill" title="Synchronized with official government portals">
-            <span class="status-dot"></span>
-            <span id="sync-status-label">Official Feeds Synced</span>
-          </div>
-          <button class="btn btn-sm btn-outline" id="btn-manual-sync" title="Sync official notifications">
-            <span id="sync-icon">🔄</span> Sync
-          </button>
-        </div>
-      </div>
-
-      <nav>
-        <ul>
-          <li><button class="nav-tab active" data-tab="dashboard">🔔 Recruitment Alerts</button></li>
-          <li><button class="nav-tab" data-tab="exams">📋 Exams Explorer</button></li>
-          <li><button class="nav-tab" data-tab="eligibility">📊 Eligibility Matcher</button></li>
-          <li><button class="nav-tab" data-tab="internships">🔬 DRDO & Internships</button></li>
-          <li><button class="nav-tab" data-tab="ai">🛡️ AI Mentor</button></li>
-          <li><button class="nav-tab" data-tab="directory">🏛️ Official Directory & Pay</button></li>
-        </ul>
-      </nav>
-    </div>
-  </header>
-
-  <!-- Main View Container -->
-  <main class="container">
-
-    <!-- ================= SECTION 1: RECRUITMENT ALERTS (DASHBOARD) ================= -->
-    <section id="dashboard" class="app-section active">
-      
-      <!-- Metrics Bar -->
-      <div class="metrics-grid">
-        <div class="metric-card">
-          <div class="metric-num" id="counter-active-notifications">-</div>
-          <div class="metric-label">Active Vacancies</div>
-        </div>
-        <div class="metric-card">
-          <div class="metric-num" id="counter-exams">-</div>
-          <div class="metric-label">Entrance Exams</div>
-        </div>
-        <div class="metric-card">
-          <div class="metric-num" id="counter-direct-entries">-</div>
-          <div class="metric-label">Direct Technical Entries</div>
-        </div>
-        <div class="metric-card">
-          <div class="metric-num" id="counter-internships">-</div>
-          <div class="metric-label">DRDO / DPSU Internships</div>
-        </div>
-      </div>
-
-      <!-- Controls Row: Search & Filters -->
-      <div class="controls-card">
-        <div class="controls-title">
-          <h2>Recruitment Alerts & Official Gazettes</h2>
-          <p>Verified from UPSC, Army, Navy, Air Force, Coast Guard, and DRDO official portals.</p>
-        </div>
-        
-        <div class="controls-inputs">
-          <input type="text" id="search-input" class="form-input" placeholder="Search vacancies (e.g. CDS, NDA, Technical, DRDO, Navy)...">
-          
-          <select id="filter-org" class="form-select">
-            <option value="all">All Organizations</option>
-            <option value="upsc">UPSC</option>
-            <option value="indian army">Indian Army</option>
-            <option value="indian navy">Indian Navy</option>
-            <option value="indian air force">Indian Air Force</option>
-            <option value="drdo">DRDO</option>
-            <option value="indian coast guard">Coast Guard</option>
-          </select>
-
-          <select id="filter-status" class="form-select">
-            <option value="all">All Statuses</option>
-            <option value="Active">Active Only</option>
-            <option value="Upcoming">Upcoming</option>
-          </select>
-          <button type="button" class="btn btn-outline saved-filter-btn" id="btn-saved-filter" aria-pressed="false">☆ Saved</button>
-        </div>
-      </div>
-
-      <!-- Notifications Container -->
-      <div class="cards-grid" id="notifications-container">
-        <!-- Rendered dynamically -->
-      </div>
-    </section>
-
-
-    <!-- ================= SECTION 2: EXAMS EXPLORER ================= -->
-    <section id="exams" class="app-section">
-      <div class="section-intro">
-        <h2>Indian Defence Entrance Examinations & Direct Schemes</h2>
-        <p>Explore selection criteria, exam pattern, age limits, SSB stages, and official application portals.</p>
-      </div>
-
-      <!-- Exam Filters & Search Controls -->
-      <div class="controls-card" style="margin-bottom: 20px;">
-        <div class="controls-inputs" style="max-width: 100%; width: 100%;">
-          <input type="text" id="exam-search-input" class="form-input" placeholder="Search exams by name, syllabus, or academy...">
-          
-          <select id="filter-exam-wing" class="form-select">
-            <option value="all">All Wings / Services</option>
-            <option value="Tri-Services">Tri-Services (NDA / CDS / JAG / NCC)</option>
-            <option value="Army">Indian Army 🎖️</option>
-            <option value="Navy">Indian Navy ⚓</option>
-            <option value="Air Force">Indian Air Force ✈️</option>
-            <option value="Coast Guard">Coast Guard 🛡️</option>
-            <option value="DRDO">DRDO Scientific</option>
-          </select>
-
-          <select id="filter-exam-type" class="form-select">
-            <option value="all">All Commission Types</option>
-            <option value="Entrance Exam">Written Entrance Exam</option>
-            <option value="Direct Entry">Direct Entry (No Written Exam)</option>
-          </select>
-        </div>
-      </div>
-
-      <!-- Live Exam Countdown Ticker Card -->
-      <div class="clean-card countdown-strip" style="margin-bottom: 24px;">
-        <div class="countdown-info">
-          <span class="status-badge upcoming">UPCOMING EXAM TARGET</span>
-          <h3 id="countdown-title">CDS Examination (I) 2027</h3>
-          <p id="countdown-date-display">Scheduled Date: April 11, 2027 • UPSC Official Calendar</p>
-        </div>
-        <div class="countdown-digits">
-          <div class="digit-cell"><span id="cd-days">--</span><small>Days</small></div>
-          <div class="digit-cell"><span id="cd-hours">--</span><small>Hours</small></div>
-          <div class="digit-cell"><span id="cd-mins">--</span><small>Mins</small></div>
-          <div class="digit-cell"><span id="cd-secs">--</span><small>Secs</small></div>
-        </div>
-        <div class="countdown-action">
-          <button class="btn btn-sm btn-primary" id="btn-ics-download">📅 Save Calendar Event</button>
-        </div>
-      </div>
-
-      <div class="cards-grid" id="exams-container">
-        <!-- Rendered dynamically -->
-      </div>
-    </section>
-
-
-    <!-- ================= SECTION 3: ELIGIBILITY MATCHER ================= -->
-    <section id="eligibility" class="app-section">
-      <div class="section-intro">
-        <h2>Armed Forces Commission Eligibility Matcher</h2>
-        <p>Input your parameters to calculate matching Commissioned and Non-Commissioned pathways across Army, Navy, Air Force, and Coast Guard.</p>
-      </div>
-
-      <div class="matcher-layout">
-        <!-- Form Column -->
-        <form id="eligibility-form" class="clean-card form-card">
-          <div class="form-field">
-            <label>1. Gender</label>
-            <div class="gender-toggle">
-              <label class="gender-btn active">
-                <input type="radio" name="gender" value="male" checked> Male
-              </label>
-              <label class="gender-btn">
-                <input type="radio" name="gender" value="female"> Female
-              </label>
-            </div>
-          </div>
-
-          <div class="form-field">
-            <label for="age-slider">2. Age: <strong id="age-slider-value">20</strong> Years</label>
-            <input type="range" id="age-slider" class="range-input" min="15" max="35" value="20">
-          </div>
-
-          <div class="form-field">
-            <label for="qualification-select">3. Highest Qualification</label>
-            <select id="qualification-select" class="form-select full-width">
-              <option value="12th">10th / 12th standard (School Appearing / Passed)</option>
-              <option value="graduate_non_tech">Graduate Degree (B.Sc, B.A, B.Com, BBA)</option>
-              <option value="graduate_tech" selected>Engineering Graduate (B.Tech / B.E)</option>
-              <option value="law">Law Graduate (LLB - 3 or 5 Years)</option>
-              <option value="post_graduate">Post Graduate (M.Tech, M.Sc, M.A)</option>
-            </select>
-          </div>
-
-          <div class="form-field">
-            <label for="pcm-select">4. Had Physics & Mathematics in 12th?</label>
-            <select id="pcm-select" class="form-select full-width">
-              <option value="yes" selected>Yes, had PCM in 10+2</option>
-              <option value="no">No, other stream (Arts / Commerce / Biology)</option>
-            </select>
-          </div>
-
-          <div class="form-field">
-            <label for="height-slider">5. Height: <strong id="height-slider-value">170 cm</strong></label>
-            <input type="range" id="height-slider" class="range-input" min="0" max="210" value="170">
-            <span class="field-hint">Minimum: 157.5 cm (Army/Navy), 162.5 cm (Flying), 152 cm (Women). Set to 0 to skip.</span>
-          </div>
-
-          <!-- Integrated BMI & Weight Evaluator -->
-          <div class="form-field" style="border-top: 1px solid var(--border); padding-top: 12px; margin-top: 4px;">
-            <label for="weight-input">6. Weight (in kg) for Military BMI check:</label>
-            <div style="display: flex; gap: 8px;">
-              <input type="number" id="weight-input" class="form-input" value="68" min="35" max="140" style="width: 120px;">
-              <span class="field-hint" style="align-self: center;" id="bmi-preview-label">BMI: ~23.5 (Normal Cadre)</span>
-            </div>
-          </div>
-
-          <button type="submit" class="btn btn-primary full-width" style="margin-top: 6px;">
-            Calculate Eligible Pathways 🚀
-          </button>
-        </form>
-
-        <!-- Results Column -->
-        <div class="clean-card results-card" id="results-card">
-          <div class="results-placeholder">
-            <div class="placeholder-icon">📊</div>
-            <h3>Eligibility Calculations</h3>
-            <p>Select your criteria on the left to see matching entries across Army, Navy, Air Force, and Coast Guard.</p>
-          </div>
-        </div>
-      </div>
-    </section>
-
-
-    <!-- ================= SECTION 4: INTERNSHIPS ================= -->
-    <section id="internships" class="app-section">
-      <div class="section-intro">
-        <h2>Defence Internships & Scientific Student Projects</h2>
-        <p>Apprentice training under NATS, student semester capstone projects in DRDO research facilities, and Defence PSU training.</p>
-      </div>
-
-      <!-- Internship Controls -->
-      <div class="controls-card" style="margin-bottom: 20px;">
-        <div class="controls-inputs" style="max-width: 100%; width: 100%;">
-          <input type="text" id="intern-search-input" class="form-input" placeholder="Search internships by lab, domain, or skills (e.g. AI, Propulsion, Drone, GTRE)...">
-          
-          <select id="filter-intern-org" class="form-select">
-            <option value="all">All Establishments</option>
-            <option value="DRDO">DRDO Laboratories</option>
-            <option value="ADA">Aeronautical Development Agency (ADA)</option>
-            <option value="BEL">Bharat Electronics Limited (BEL)</option>
-            <option value="HAL">Hindustan Aeronautics Limited (HAL)</option>
-          </select>
-
-          <button class="btn btn-outline btn-sm" id="btn-show-noc-template">
-            📄 DRDO HoD Recommendation Format
-          </button>
-        </div>
-      </div>
-
-      <div class="cards-grid" id="internships-container">
-        <!-- Rendered dynamically -->
-      </div>
-    </section>
-
-
-    <!-- ================= SECTION 5: AI MENTOR ================= -->
-    <section id="ai" class="app-section">
-      <div class="section-intro">
-        <h2>Defence Track AI Mentor</h2>
-        <p>Immediate guidance on SSB interview stages, physical/medical benchmarks, eyesight criteria, salaries, and careers.</p>
-      </div>
-
-      <div class="chat-layout">
-        <!-- Sidebar Hints -->
-        <div class="chat-sidebar">
-          <div class="clean-card sidebar-box">
-            <h4>💡 Quick Topics</h4>
-            <div class="prompt-chips">
-              <button class="chip-btn" data-prompt="Analyze profile">📊 Analyze my career profile</button>
-              <button class="chip-btn" data-prompt="What is the salary of a Lieutenant under 7th CPC?">💰 Lieutenant Salary & MSP</button>
-              <button class="chip-btn" data-prompt="What is the eye vision limit for flying branch?">👁️ Flying Branch Eyesight Rules</button>
-              <button class="chip-btn" data-prompt="How does the 5-day SSB interview work?">🎯 5-Day SSB procedure details</button>
-              <button class="chip-btn" data-prompt="What are the opportunities for women in armed forces?">👩‍✈️ Women in Defence entries</button>
-              <button class="chip-btn" data-prompt="Are there internships at DRDO?">🔬 DRDO student project scheme</button>
-            </div>
-          </div>
-        </div>
-
-        <!-- Chat Container -->
-        <div class="clean-card chat-box">
-          <div class="chat-header">
-            <div class="chat-title-group">
-              <span class="bot-icon">🤖</span>
-              <div>
-                <strong>AI Career Advisor</strong>
-                <span class="bot-status">Active • Official Portals Connected</span>
-              </div>
-            </div>
-            <button id="reset-chat-btn" class="btn btn-sm btn-ghost">Reset Chat 🔄</button>
-          </div>
-
-          <div class="chat-messages" id="chat-messages">
-            <!-- Messages stream -->
-          </div>
-
-          <div class="chat-input-bar">
-            <input type="text" id="chatbot-input" class="chat-input" placeholder="Ask about SSB stages, eyesight standards, direct entries, DRDO labs...">
-            <button id="chatbot-send-btn" class="btn btn-primary btn-send">Send</button>
-          </div>
-        </div>
-      </div>
-    </section>
-
-
-    <!-- ================= SECTION 6: OFFICIAL DIRECTORY & PAY MATRIX ================= -->
-    <section id="directory" class="app-section">
-      <div class="section-intro">
-        <h2>Official Government Portals Directory & 7th CPC Pay Scale</h2>
-        <p>Verified, official websites for application submissions, gazette notices, candidate helplines, and officer rank pay matrix.</p>
-      </div>
-
-      <!-- 7th CPC Armed Forces Pay Matrix Section -->
-      <div class="clean-card" style="margin-bottom: 28px;">
-        <div style="margin-bottom: 14px;">
-          <h3 style="font-size: 1.15rem; color: var(--primary);">💰 7th CPC Armed Forces Commissioned Officer Pay Matrix</h3>
-          <p style="font-size: 0.85rem; color: var(--text-muted);">Starting scale for Lieutenants, Sub Lieutenants, and Flying Officers includes Basic Pay + ₹15,500/month Military Service Pay (MSP) + 50% DA.</p>
-        </div>
-
-        <div style="overflow-x: auto;">
-          <table class="minimal-table">
-            <thead>
-              <tr>
-                <th>Pay Level</th>
-                <th>🎖️ Army Rank</th>
-                <th>⚓ Navy Rank</th>
-                <th>✈️ Air Force Rank</th>
-                <th>🛡️ Coast Guard</th>
-                <th>Basic Pay Range</th>
-                <th>MSP</th>
-              </tr>
-            </thead>
-            <tbody id="pay-matrix-body">
-              <!-- Rendered dynamically -->
-            </tbody>
-          </table>
-        </div>
-      </div>
-
-      <!-- Portals Header -->
-      <div style="margin-bottom: 14px;">
-        <h3 style="font-size: 1.15rem; color: var(--primary);">🏛️ Verified Government Recruitment Portals</h3>
-        <p style="font-size: 0.85rem; color: var(--text-muted);">Direct links to verified candidate portals and recruitment directorates.</p>
-      </div>
-
-      <div class="cards-grid" id="official-portals-container">
-        <!-- Rendered dynamically -->
-      </div>
-    </section>
-
-  </main>
-
-  <!-- Exam Details Modal Overlay -->
-  <div class="modal-overlay" id="exam-modal">
-    <div class="modal-box">
-      <button class="modal-close-btn" id="modal-close" aria-label="Close modal">✕</button>
-      <div class="modal-body" id="modal-content">
-        <!-- Rendered dynamically -->
-      </div>
-    </div>
-  </div>
-
-  <!-- NOC Recommendation Format Modal -->
-  <div class="modal-overlay" id="noc-modal">
-    <div class="modal-box">
-      <button class="modal-close-btn" id="noc-modal-close" aria-label="Close modal">✕</button>
-      <div class="modal-body">
-        <div class="modal-header-section">
-          <h2 class="modal-title">DRDO Student Project - College HoD Letter Format</h2>
-          <p style="font-size: 13px; color: var(--text-muted);">Standard format required by DRDO laboratories for accepting student academic projects.</p>
-        </div>
-        <div style="background: var(--bg); border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 16px; font-family: monospace; font-size: 12px; line-height: 1.6; white-space: pre-wrap;" id="noc-template-text">
-(ON COLLEGE OFFICIAL LETTERHEAD)
+<header><div class="top">
+<div class="headrow"><div class="brand"><img src="logo.png" alt="DFC"><div><h1>Defence Track AI</h1><small>Defence Focus Club · TKMCE</small></div></div><div><span class="sync" id="sync-status-label">Official feeds</span> <button class="btn btn-sm btn-outline" id="btn-manual-sync"><span id="sync-icon">↻</span> Sync</button></div></div>
+<nav class="nav"><button class="nav-tab active" data-tab="dashboard">Alerts</button><button class="nav-tab" data-tab="exams">Exams</button><button class="nav-tab" data-tab="eligibility">Eligibility</button><button class="nav-tab" data-tab="internships">Internships</button><button class="nav-tab" data-tab="ai">AI Mentor</button><button class="nav-tab" data-tab="directory">Directory</button></nav>
+</div></header>
+<main class="container">
+<section id="dashboard" class="app-section active">
+<div class="metrics-grid"><div class="metric-card"><div class="metric-num" id="counter-active-notifications">–</div><div class="metric-label">Active openings</div></div><div class="metric-card"><div class="metric-num" id="counter-exams">–</div><div class="metric-label">Entrance exams</div></div><div class="metric-card"><div class="metric-num" id="counter-direct-entries">–</div><div class="metric-label">Direct entries</div></div><div class="metric-card"><div class="metric-num" id="counter-internships">–</div><div class="metric-label">Internships</div></div></div>
+<div class="controls-card"><div class="controls-title"><h2>Recruitment alerts</h2><p>Find active and upcoming defence opportunities.</p></div><div class="controls-inputs"><input id="search-input" class="form-input" placeholder="Search recruitment"><select id="filter-org" class="form-select"><option value="all">All organisations</option><option value="upsc">UPSC</option><option value="indian army">Army</option><option value="indian navy">Navy</option><option value="indian air force">Air Force</option><option value="drdo">DRDO</option><option value="indian coast guard">Coast Guard</option></select><select id="filter-status" class="form-select"><option value="all">All statuses</option><option value="Active">Active</option><option value="Upcoming">Upcoming</option></select><button class="btn btn-sm btn-outline saved-filter-btn" id="btn-saved-filter">☆ Saved</button></div></div><div class="cards-grid" id="notifications-container"></div>
+</section>
+<section id="exams" class="app-section"><div class="section-intro"><h2>Exams & entry routes</h2><p>Compare written exams and direct-entry pathways.</p></div>
+<div class="controls-card"><div class="controls-inputs"><input id="exam-search-input" class="form-input" placeholder="Search exam, entry or syllabus"><select id="filter-exam-wing" class="form-select"><option value="all">All services</option><option value="Tri-Services">Tri-Services</option><option value="Army">Army</option><option value="Navy">Navy</option><option value="Air Force">Air Force</option><option value="Coast Guard">Coast Guard</option><option value="DRDO">DRDO</option></select><select id="filter-exam-type" class="form-select"><option value="all">All entry types</option><option value="Entrance Exam">Written exam</option><option value="Direct Entry">Direct entry</option></select></div></div>
+<div class="clean-card countdown-strip"><div class="countdown-info"><span class="status-badge upcoming">UPSC EXAM</span><h3 id="countdown-title">CDS Examination (I) 2027</h3><p id="countdown-date-display">11 April 2027</p></div><div class="countdown-digits"><div class="digit-cell"><span id="cd-days">--</span><small>Days</small></div><div class="digit-cell"><span id="cd-hours">--</span><small>Hours</small></div><div class="digit-cell"><span id="cd-mins">--</span><small>Mins</small></div><div class="digit-cell"><span id="cd-secs">--</span><small>Secs</small></div></div><button class="btn btn-sm btn-outline" id="btn-ics-download">Add to calendar</button></div><div class="cards-grid" id="exams-container"></div></section>
+<section id="eligibility" class="app-section"><div class="section-intro"><h2>Eligibility matcher</h2><p>Check entry routes using your education, age and physical details.</p></div><div class="matcher-layout"><form id="eligibility-form" class="clean-card form-card"><div class="form-field"><label>Gender</label><div class="gender-toggle"><label class="gender-btn active"><input type="radio" name="gender" value="male" checked> Male</label><label class="gender-btn"><input type="radio" name="gender" value="female"> Female</label></div></div><div class="form-field"><label for="age-slider">Age · <strong id="age-slider-value">20</strong> years</label><input id="age-slider" type="range" min="15" max="35" value="20"></div><div class="form-field"><label for="qualification-select">Education</label><select id="qualification-select" class="form-select full-width"><option value="12th">10th / 12th</option><option value="graduate_non_tech">Non-technical graduate</option><option value="graduate_tech" selected>Engineering graduate</option><option value="law">Law graduate</option><option value="post_graduate">Postgraduate</option></select></div><div class="form-field"><label for="pcm-select">Physics & Mathematics in 12th?</label><select id="pcm-select" class="form-select full-width"><option value="yes" selected>Yes</option><option value="no">No</option></select></div><div class="form-field"><label for="height-slider">Height · <strong id="height-slider-value">170 cm</strong></label><input id="height-slider" type="range" min="0" max="210" value="170"><small class="field-hint">Set 0 to skip height check.</small></div><div class="form-field"><label for="weight-input">Weight (kg)</label><div style="display:flex;gap:8px;align-items:center"><input id="weight-input" type="number" class="form-input" value="68" min="35" max="140"><span class="field-hint" id="bmi-preview-label">BMI preview</span></div></div><button class="btn btn-primary full-width" type="submit">Find eligible pathways</button></form><div class="clean-card results-card" id="results-card"><div class="results-placeholder"><h3>Matching entries</h3><p>Fill in your profile and calculate to see possible defence career routes.</p></div></div></div></section>
+<section id="internships" class="app-section"><div class="section-intro"><h2>Internships & student projects</h2><p>DRDO labs, defence PSUs and technical project opportunities.</p></div><div class="controls-card"><div class="controls-inputs"><input id="intern-search-input" class="form-input" placeholder="Search lab, field or skill"><select id="filter-intern-org" class="form-select"><option value="all">All establishments</option><option value="DRDO">DRDO</option><option value="ADA">ADA</option><option value="BEL">BEL</option><option value="HAL">HAL</option></select><button class="btn btn-sm btn-outline" id="btn-show-noc-template">HoD recommendation format</button></div></div><div class="cards-grid" id="internships-container"></div></section>
+<section id="ai" class="app-section"><div class="section-intro"><h2>AI career mentor</h2><p>Ask about SSB, entry routes, medical standards, exams or defence careers.</p></div><div class="chat-layout"><div class="clean-card chat-sidebar"><h4>Suggested questions</h4><div class="prompt-chips"><button class="chip-btn" data-prompt="Analyze profile">Analyze my profile</button><button class="chip-btn" data-prompt="What is the salary of a Lieutenant under 7th CPC?">Lieutenant salary</button><button class="chip-btn" data-prompt="What is the eye vision limit for flying branch?">Flying eyesight criteria</button><button class="chip-btn" data-prompt="How does the 5-day SSB interview work?">SSB process</button><button class="chip-btn" data-prompt="What are the opportunities for women in armed forces?">Women in defence</button><button class="chip-btn" data-prompt="Are there internships at DRDO?">DRDO internships</button></div></div><div class="clean-card chat-box"><div class="chat-header"><div><strong>Defence Track AI</strong><span class="bot-status">Career guidance assistant</span></div><button id="reset-chat-btn" class="btn btn-sm btn-outline">Reset</button></div><div class="chat-messages" id="chat-messages"></div><div class="chat-input-bar"><input id="chatbot-input" class="chat-input" placeholder="Ask a question…"><button id="chatbot-send-btn" class="btn btn-primary btn-send">Send</button></div></div></div></section>
+<section id="directory" class="app-section"><div class="section-intro"><h2>Reference directory</h2><p>Officer pay matrix and official recruitment portals.</p></div><div class="clean-card" style="margin-bottom:16px"><h3>7th CPC officer pay matrix</h3><div style="overflow:auto"><table class="minimal-table"><thead><tr><th>Level</th><th>Army</th><th>Navy</th><th>Air Force</th><th>Coast Guard</th><th>Basic pay</th><th>MSP</th></tr></thead><tbody id="pay-matrix-body"></tbody></table></div></div><h3>Official portals</h3><div class="cards-grid" id="official-portals-container"></div></section>
+</main>
+<div class="modal-overlay" id="exam-modal"><div class="modal-box"><button class="modal-close-btn" id="modal-close" aria-label="Close">×</button><div class="modal-body" id="modal-content"></div></div></div>
+<div class="modal-overlay" id="noc-modal"><div class="modal-box"><button class="modal-close-btn" id="noc-modal-close" aria-label="Close">×</button><div class="modal-body"><h2 class="modal-title">DRDO student project · HoD letter</h2><p class="field-hint">College recommendation format for student projects.</p><div id="noc-template-text" style="white-space:pre-wrap;padding:14px;background:#f7f9fc;border:1px solid var(--line);border-radius:9px">(ON COLLEGE OFFICIAL LETTERHEAD)
 
 To,
 The Director,
-[DRDO Laboratory Name, e.g., GTRE / CAIR / ADE / DLRL]
+[DRDO Laboratory Name]
 [City, Pin Code]
 
-Subject: Request for Final Year B.Tech/M.Tech Student Academic Project
+Subject: Request for Final Year Student Academic Project
 
 Respected Sir/Madam,
 
-This is to certify that the following student(s) is/are bona fide students of [College Name, e.g., TKM College of Engineering, Kollam], currently studying in [Semester / Year] of [Department, e.g., Mechanical / Computer Science / Electronics Engineering]:
+This is to certify that the following student(s) is/are bona fide students of [College Name], currently studying in [Semester / Year] of [Department]:
 
 1. Student Name: _______________________ Roll No: ________________
 2. Student Name: _______________________ Roll No: ________________
 
-The college has No Objection to the student(s) undertaking their final semester project at your esteemed organization under the guidance of DRDO scientists. The student(s) will strictly adhere to the security, confidentiality, and discipline rules of DRDO.
+The college has No Objection to the student(s) undertaking their academic project at your organization under guidance. The student(s) will follow security and confidentiality rules.
 
 Thanking you.
 
@@ -424,38 +58,8 @@ Yours sincerely,
 
 (Signature & Seal)
 Head of Department / Principal
-College Name & Contact
-        </div>
-        <div style="margin-top: 18px; display: flex; gap: 8px;">
-          <button class="btn btn-primary btn-sm" id="btn-copy-noc">📋 Copy Template Text</button>
-          <button class="btn btn-outline btn-sm" onclick="document.getElementById('noc-modal').style.display='none'">Close</button>
-        </div>
-      </div>
-    </div>
-  </div>
-
-  <!-- Toast Notification Element -->
-  <div class="toast-wrapper" id="toast"></div>
-
-  <!-- Minimal Clean Footer -->
-  <footer>
-    <div class="container footer-content">
-      <div class="footer-brand">
-        <img src="logo.png" alt="Logo" class="footer-logo">
-        <div>
-          <strong>Defence Focus Club</strong>
-          <p>TKM College of Engineering (TKMCE), Kollam, Kerala</p>
-        </div>
-      </div>
-      <p class="footer-disclaimer">
-        Disclaimer: Information is compiled directly from official Government of India gazettes (UPSC, Join Indian Army, Join Indian Navy, IAF AFCAT, DRDO RAC). Always cross-reference notifications on the respective official websites before applying.
-      </p>
-    </div>
-  </footer>
-
-  <!-- Scripts -->
-  <script src="data.js"></script>
-  <script src="ai-assistant.js"></script>
-  <script src="app.js"></script>
-</body>
-</html>
+College Name & Contact</div><div style="display:flex;gap:8px;margin-top:14px"><button class="btn btn-primary btn-sm" id="btn-copy-noc">Copy text</button><button class="btn btn-sm" onclick="document.getElementById('noc-modal').style.display='none'">Close</button></div></div></div></div>
+<div id="toast" class="toast-wrapper"></div>
+<footer><div class="footer-content"><div class="footer-brand"><img class="footer-logo" src="logo.png" alt=""><div><strong>Defence Focus Club · TKMCE</strong><p>Defence Track AI</p></div></div><p class="footer-disclaimer">Verify eligibility and deadlines through the respective official recruitment portal before applying.</p></div></footer>
+<script src="data.js"></script><script src="ai-assistant.js"></script><script src="app.js"></script>
+</body></html>
