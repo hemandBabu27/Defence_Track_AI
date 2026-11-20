@@ -129,7 +129,7 @@ document.addEventListener("DOMContentLoaded", () => {
   // --- OFFICIAL SELF-UPDATING SYNC ENGINE ---
   async function fetchLiveUpdates() {
     try {
-      const res = await fetch("/api/live");
+      const res = await fetch("/data/live.json", { cache: "no-store" });
       if (res.ok) {
         const liveData = await res.json();
         if (liveData && Array.isArray(liveData.sources)) {
@@ -186,28 +186,15 @@ document.addEventListener("DOMContentLoaded", () => {
 
   if (btnManualSync) {
     btnManualSync.addEventListener("click", async () => {
-      if (syncIcon) syncIcon.style.display = "inline-block";
       btnManualSync.disabled = true;
-
+      if (syncIcon) syncIcon.style.display = "inline-block";
       try {
-        const res = await fetch("/api/refresh", { method: "POST" });
-        if (res.ok) {
-          const result = await res.json();
-          if (result.status === "cooldown") {
-            showToast(`Official feed recently updated. (Next check in ${result.retryAfterSeconds}s)`);
-          } else {
-            showToast("Updating from official government portals... 🔄");
-            setTimeout(fetchLiveUpdates, 2500);
-          }
-        } else {
-          fallbackSync();
-        }
-      } catch (err) {
+        await fetchLiveUpdates();
+        showToast("Loaded the latest published official-feed cache. Sources refresh automatically every 6 hours.");
+      } catch (_) {
         fallbackSync();
       } finally {
-        setTimeout(() => {
-          btnManualSync.disabled = false;
-        }, 800);
+        setTimeout(() => { btnManualSync.disabled = false; }, 800);
       }
     });
   }
