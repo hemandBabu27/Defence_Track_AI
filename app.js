@@ -1090,18 +1090,13 @@ document.addEventListener("DOMContentLoaded", () => {
             </div>
             <h3 class="portal-title">${p.name}</h3>
             <p class="portal-desc">${p.description}</p>
+            <p class="portal-navigation"><strong>How to navigate:</strong> ${p.navigation || "Open the latest notices or recruitment section and follow the instructions in the official advertisement."}</p>
           </div>
-          <div>
-            <div class="portal-helpline">
-              <span>📞 Helpline:</span> <strong>${p.helpline}</strong>
-            </div>
+          <div class="portal-bottom">
+            <div class="portal-helpline"><span>Helpline</span> <strong>${p.helpline}</strong></div>
             <div class="card-actions">
-              <a href="${p.url}" target="_blank" class="btn btn-outline btn-sm" style="flex: 1;">
-                Portal Info 🌐
-              </a>
-              <a href="${p.applyUrl}" target="_blank" class="btn btn-primary btn-sm" style="flex: 1;">
-                Apply Online 🔗
-              </a>
+              <a href="${p.url}" target="_blank" rel="noopener noreferrer" class="btn btn-outline btn-sm">Official website ↗</a>
+              <a href="${p.applyUrl}" target="_blank" rel="noopener noreferrer" class="btn btn-primary btn-sm">${p.id === "pib" || p.id === "mod_pib" || p.id === "drdo_main" ? "Notices / info ↗" : "Recruitment / apply ↗"}</a>
             </div>
           </div>
         </div>
