@@ -22,7 +22,7 @@
       "use": "@vercel/static"
     },
     {
-      "src": "logo.png",
+      "src": "DFC LOGO.png",
       "use": "@vercel/static"
     },
     {
